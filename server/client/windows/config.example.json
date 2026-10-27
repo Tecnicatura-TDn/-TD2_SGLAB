@@ -1,0 +1,13 @@
+{
+  "laboratorio": "LAB01",
+  "ci": 0,
+  "salida": "C:\\ProgramData\\SGLAB\\pendientes",
+  "servidor": "192.168.1.10",
+  "usuario": "sglab_upload",
+  "directorio_remoto": "/srv/sglab/incoming",
+  "puerto_ssh": 22,
+  "clave": "C:\\ProgramData\\SGLAB\\id_ed25519",
+  "known_hosts": "C:\\ProgramData\\SGLAB\\known_hosts",
+  "reintentos": 3,
+  "espera": 10
+}
