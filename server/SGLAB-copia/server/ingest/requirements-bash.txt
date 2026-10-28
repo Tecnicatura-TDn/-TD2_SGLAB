@@ -1,0 +1,2 @@
+# Parser TOML para spawn.sh (incluye el comando tomlq).
+yq>=3,<4

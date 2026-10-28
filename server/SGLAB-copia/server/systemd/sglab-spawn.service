@@ -1,0 +1,20 @@
+[Unit]
+Description=SGLAB copia - Ingesta de reportes TOML
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=facu
+SupplementaryGroups=docker sglab-ingest
+WorkingDirectory=/home/facu/SGLAB-copia
+Environment=SGLAB_DATA_DIR=/home/facu/SGLAB-copia/server
+Environment=SGLAB_TOMLQ=/home/facu/SGLAB-copia/.venv/bin/tomlq
+ExecStart=/usr/bin/bash /home/facu/SGLAB-copia/server/bin/spawn.sh
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

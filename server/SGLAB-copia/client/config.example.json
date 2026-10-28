@@ -1,0 +1,13 @@
+{
+  "laboratorio": "LAB01",
+  "ci": 0,
+  "salida": "/var/lib/sglab/pendientes",
+  "servidor": "192.168.1.10",
+  "usuario": "sglab_upload",
+  "directorio_remoto": "/home/facu/SGLAB-copia/server/incoming",
+  "puerto_ssh": 22,
+  "clave": "/etc/sglab/id_ed25519",
+  "known_hosts": "/etc/sglab/known_hosts",
+  "reintentos": 3,
+  "espera": 10
+}
