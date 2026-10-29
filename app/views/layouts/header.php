@@ -3,7 +3,7 @@
         <div class="header-center">
             <div class="header-item">
                 <div class="header-logo">
-                    <img src="assets/logo_utu.webp" alt="Logo UTU Brazo Oriental">
+                    <img src="public/img/logo_utu.webp" alt="Logo UTU Brazo Oriental">
                 </div>
             </div>
             <div class="header-item">
@@ -15,7 +15,7 @@
                     case "estudiante": ?>
                     <nav class="header-nav">
                         <ul class="nav-content">
-                            <li class="nav-item">Hola Roberto Clavijo</li>
+                            <li class="nav-item">Hola [Nombre estudiante]</li>
                             <li class="nav-item"><a href="#">Cerrar sesión</a></li>
                         </ul>
                     </nav>
@@ -23,7 +23,15 @@
                     case "docente": ?>
                     <nav class="header-nav">
                         <ul class="nav-content">
-                            <li class="nav-item">Hola Damian Pajares</li>
+                            <li class="nav-item">Hola [Nombre docente]</li>
+                            <li class="nav-item"><a href="#">Cerrar sesión</a></li>
+                        </ul>
+                    </nav>
+                <?php break;
+                    case "asistente": ?>
+                    <nav class="header-nav">
+                        <ul class="nav-content">
+                            <li class="nav-item">Hola [Nombre asistente]</li>
                             <li class="nav-item"><a href="#">Cerrar sesión</a></li>
                         </ul>
                     </nav>
