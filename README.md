@@ -1,13 +1,9 @@
-# Mi proyecto MVC (Node.js + Express + Docker)
+# TD2SGLAB
 
-## Levantar con Docker
-    docker compose up --build
+Enlace a Google Drive:
+https://drive.google.com/drive/folders/1MZuWgNfkVu3Hl370qXv6x-qYt4Yx1MZS
 
-Abrir http://localhost:3000
 
-## Sin Docker
-    npm install
-    npm start
 
 ## Estructura
 - app/models: datos y lógica de negocio
