@@ -1,0 +1,130 @@
+main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-top: var(--header-height);
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--header-height);
+    box-sizing: border-box;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    z-index: 100;
+}
+
+.header-content {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-center {
+    width: 100%;
+    max-width: 80rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.header-item {
+    min-width: 1rem;
+}
+
+.header-item a {
+    align-self: flex-start;
+    color: #f7f7f7;
+    text-decoration: none;
+}
+
+.header-logo img {
+    height: calc(var(--header-height) + .5rem - 2rem);
+    width: auto;
+    display: block;
+}
+
+footer {
+    width: 100%;
+    background-color: var(--primary-color);
+    position: fixed;
+    left: 0;
+    bottom: 0;
+}
+
+.footer-content {
+    height: 4rem;
+    color: #ffffff;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-size: clamp(0.75rem, 2vw, 1rem);
+}
+
+.header-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.nav-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: clamp(1.25rem, 2.25rem, 1.75rem);
+}
+
+.nav-item {
+    text-decoration: none;
+    list-style: none;
+}
+
+/* Main Content */
+.main-div {
+    width: clamp(95vw, 85%, 100vw);
+    height: 90vh;
+    margin: clamp(1.15rem, 2.15vw, 1.65rem);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.main-header {
+    width: 60%;
+}
+
+.main-subdiv {
+    display: flex;
+    gap: 1.5rem;
+    font-size: clamp(0.75rem, 1.45rem, 1.20rem);
+    flex-direction: row;
+    padding: 0.5rem;
+}
+
+@media (max-width: 720px) {
+    .main-subdiv {
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .main-header {
+        width: 100%;
+    }
+}

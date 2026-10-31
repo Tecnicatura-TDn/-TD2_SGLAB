@@ -1,0 +1,118 @@
+:root {
+    --primary-color: #064795;
+    --header-height: 6rem;
+    --table-even: #D9E1E6;
+    --table-odd: #C8CFDF;
+    --table-head: #b0b2b4;
+    --status-online: #3cc539;
+    --status-offline: #b34132;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    outline: none;
+    user-select: none;
+}
+
+body {
+    font-family: 'Roboto', Arial, Helvetica, sans-serif;
+}
+
+html {
+    scrollbar-width: none;
+}
+
+a {
+    text-decoration: none;
+    font-size: clamp(1rem, 2vw, 1.25rem);
+}
+
+span {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+}
+
+h1 {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    color: var(--primary-color);
+}
+
+table, td, th {
+    padding: 1rem;
+    text-align: left;
+    border-spacing: 0;
+}
+
+tr {
+    background-color: var(--table-odd);   
+}
+
+tr:nth-child(even) {
+    background-color: var(--table-even);
+}
+
+thead tr {
+    background-color: var(--table-head);
+}
+
+th img {
+    width: 48px;
+    height: 48px;
+}
+
+.status-circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 100%;
+    background-color: gray;
+}
+
+.status-text[data-status="online"] .status-circle {
+    animation: blink 0.5s alternate infinite;
+    background-color: var(--status-online);
+}
+
+.status-text[data-status="offline"] .status-circle {
+    background-color: var(--status-offline);
+}
+
+.status-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 0.7rem;
+    color: gray;
+}
+
+.status-text[data-status="online"] {
+    color: var(--status-online);
+    border-color: var(--status-online);
+}
+
+.status-text[data-status="offline"] {
+    color: var(--status-offline);
+    border-color: var(--status-offline);
+}
+
+td .status-text {
+    border: none;
+}
+
+td * {
+    font-size: 1rem;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@font-face {
+    font-family: "Roboto";
+    src: url("fonts/Roboto-Regular.ttf");
+}
