@@ -1,0 +1,245 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1950" viewBox="-30 -50 2400 2000">
+<rect x="-30" y="-50" width="2400" height="2000" fill="#101827"/>
+<style>text{font-family:Arial,sans-serif;fill:#e5edf8} .small{font-size:13px} .label{font-size:15px}</style>
+<line x1="1035.0" y1="210.0" x2="1025.0" y2="210.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1265.0" y1="210.0" x2="1275.0" y2="210.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1092.4489795918366" y1="750.0" x2="953.3673469387755" y2="677.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1054.0816326530612" y1="750.0" x2="978.9455782312925" y2="726.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1035.0" y1="768.0106382978723" x2="1025.0" y2="766.968085106383" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1035.0" y1="791.9893617021277" x2="1025.0" y2="793.031914893617" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1054.0816326530612" y1="810.0" x2="978.9455782312925" y2="833.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1092.4489795918366" y1="810.0" x2="953.3673469387755" y2="882.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1221.938775510204" y1="750.0" x2="1337.0408163265306" y2="702.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1265.0" y1="756.0212765957447" x2="1289.0816326530612" y2="751.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1265.0" y1="780.0" x2="1275.0" y2="780.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1265.0" y1="803.9787234042553" x2="1289.0816326530612" y2="809.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1221.938775510204" y1="810.0" x2="1337.0408163265306" y2="858.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="235.0" y1="186.02127659574467" x2="210.9183673469388" y2="181.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="235.0" y1="210.0" x2="225.0" y2="210.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="235.0" y1="233.97872340425533" x2="210.9183673469388" y2="239.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="186.02127659574467" x2="489.0816326530612" y2="181.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="210.0" x2="475.0" y2="210.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="233.97872340425533" x2="489.0816326530612" y2="239.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="314.03061224489795" y1="750.0" x2="138.9795918367347" y2="604.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="302.0408163265306" y1="750.0" x2="146.97278911564626" y2="653.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="278.0612244897959" y1="750.0" x2="162.9591836734694" y2="702.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="235.0" y1="756.0212765957447" x2="210.9183673469388" y2="751.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="235.0" y1="780.0" x2="225.0" y2="780.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="235.0" y1="803.9787234042553" x2="210.9183673469388" y2="809.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="278.0612244897959" y1="810.0" x2="162.9591836734694" y2="858.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="302.0408163265306" y1="810.0" x2="146.97278911564626" y2="907.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="314.03061224489795" y1="810.0" x2="138.9795918367347" y2="956.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="385.96938775510205" y1="750.0" x2="561.0204081632653" y2="604.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="397.9591836734694" y1="750.0" x2="553.0272108843537" y2="653.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="421.9387755102041" y1="750.0" x2="537.0408163265306" y2="702.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="756.0212765957447" x2="489.0816326530612" y2="751.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="780.0" x2="475.0" y2="780.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="803.9787234042553" x2="489.0816326530612" y2="809.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="421.9387755102041" y1="810.0" x2="537.0408163265306" y2="858.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="397.9591836734694" y1="810.0" x2="553.0272108843537" y2="907.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="385.96938775510205" y1="810.0" x2="561.0204081632653" y2="956.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1835.0" y1="186.02127659574467" x2="1810.9183673469388" y2="181.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1835.0" y1="210.0" x2="1825.0" y2="210.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1835.0" y1="233.97872340425533" x2="1810.9183673469388" y2="239.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="2065.0" y1="198.01063829787233" x2="2075.0" y2="196.96808510638297" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="2065.0" y1="221.98936170212767" x2="2075.0" y2="223.03191489361703" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="254.0816326530612" y1="1530.0" x2="178.94557823129253" y2="1506.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="235.0" y1="1548.0106382978724" x2="225.0" y2="1546.968085106383" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="235.0" y1="1571.9893617021276" x2="225.0" y2="1573.031914893617" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="254.0816326530612" y1="1590.0" x2="178.94557823129253" y2="1613.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="1536.0212765957447" x2="489.0816326530612" y2="1531.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="1560.0" x2="475.0" y2="1560.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="465.0" y1="1583.9787234042553" x2="489.0816326530612" y2="1589.0" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1404.0816326530612" y1="1530.0" x2="1328.9455782312925" y2="1506.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1385.0" y1="1548.0106382978724" x2="1375.0" y2="1546.968085106383" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1385.0" y1="1571.9893617021276" x2="1375.0" y2="1573.031914893617" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1404.0816326530612" y1="1590.0" x2="1328.9455782312925" y2="1613.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1595.9183673469388" y1="1530.0" x2="1671.0544217687075" y2="1506.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1615.0" y1="1548.0106382978724" x2="1625.0" y2="1546.968085106383" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1615.0" y1="1571.9893617021276" x2="1625.0" y2="1573.031914893617" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1595.9183673469388" y1="1590.0" x2="1671.0544217687075" y2="1613.5" stroke="#7a8da7" stroke-width="1.2"/>
+<line x1="1150.0" y1="240.0" x2="1150.0" y2="420.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="1158.0" y="304.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..1</text>
+<line x1="1150.0" y1="500.0" x2="1150.0" y2="750.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="1158.0" y="592.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<line x1="1035.0" y1="780.0" x2="835.0" y2="780.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="963.0" y="772.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">1</text>
+<line x1="665.0" y1="780.0" x2="465.0" y2="780.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="593.0" y="772.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<line x1="350.0" y1="240.0" x2="350.0" y2="420.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="358.0" y="304.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..1</text>
+<line x1="350.0" y1="500.0" x2="350.0" y2="750.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="358.0" y="592.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<line x1="465.0" y1="195.625" x2="1465.0" y2="70.625" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="873.0" y="137.625" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">1</text>
+<line x1="1635.0" y1="91.875" x2="1870.0" y2="180.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="1737.0" y="119.125" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<line x1="1265.0" y1="780.0" x2="1865.0" y2="780.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="1513.0" y="772.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">1</text>
+<line x1="1950.0" y1="740.0" x2="1950.0" y2="240.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="1958.0" y="532.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<line x1="1102.0" y1="240.0" x2="814.0" y2="420.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="994.8" y="304.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..1</text>
+<line x1="700.0" y1="500.0" x2="387.5" y2="750.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="583.0" y="592.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<line x1="350.0" y1="810.0" x2="350.0" y2="1150.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="358.0" y="938.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">1</text>
+<line x1="350.0" y1="1230.0" x2="350.0" y2="1530.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="358.0" y="1342.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<line x1="401.219512195122" y1="810.0" x2="981.7073170731708" y2="1150.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="641.4146341463415" y="938.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">1</text>
+<line x1="1098.6486486486488" y1="1230.0" x2="1463.5135135135135" y2="1530.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="1252.5945945945946" y="1342.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<line x1="465.0" y1="1560.0" x2="815.0" y2="1560.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="613.0" y="1552.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..1</text>
+<line x1="985.0" y1="1560.0" x2="1385.0" y2="1560.0" stroke="#7a8da7" stroke-width="1.2"/>
+<text x="1153.0" y="1552.0" font-size="18" paint-order="stroke" stroke="#101827" stroke-width="5">0..N</text>
+<rect x="1035" y="180" width="230" height="60" rx="4" fill="#18344d" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1150.0" y="215.0" class="small">LABORATORIO</text>
+<ellipse cx="915.0" cy="210.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="915.0" y="215.0" class="small">id_laboratorio [PK]</text>
+<ellipse cx="1385.0" cy="210.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1385.0" y="215.0" class="small">nombre</text>
+<rect x="1035" y="750" width="230" height="60" rx="4" fill="#18344d" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1150.0" y="785.0" class="small">EQUIPO</text>
+<ellipse cx="915.0" cy="657.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="915.0" y="662.5" class="small">id_equipo [PK]</text>
+<ellipse cx="915.0" cy="706.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="915.0" y="711.5" class="small">num_serie ?</text>
+<ellipse cx="915.0" cy="755.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="915.0" y="760.5" class="small">smbios_uuid ?</text>
+<ellipse cx="915.0" cy="804.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="915.0" y="809.5" class="small">estado_administrativo ?</text>
+<ellipse cx="915.0" cy="853.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="915.0" y="858.5" class="small">hostname ?</text>
+<ellipse cx="915.0" cy="902.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="915.0" y="907.5" class="small">mac ?</text>
+<ellipse cx="1385.0" cy="682.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1385.0" y="687.0" class="small">cpu ?</text>
+<ellipse cx="1385.0" cy="731.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1385.0" y="736.0" class="small">ram_gb ?</text>
+<ellipse cx="1385.0" cy="780.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1385.0" y="785.0" class="small">disco_tipo ?</text>
+<ellipse cx="1385.0" cy="829.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1385.0" y="834.0" class="small">disco_total_gb ?</text>
+<ellipse cx="1385.0" cy="878.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1385.0" y="883.0" class="small">id_laboratorio ?</text>
+<rect x="235" y="180" width="230" height="60" rx="4" fill="#18344d" stroke="#7ebce6"/>
+<text text-anchor="middle" x="350.0" y="215.0" class="small">USUARIOS</text>
+<ellipse cx="115.0" cy="161.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="166.0" class="small">ci [PK]</text>
+<ellipse cx="115.0" cy="210.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="215.0" class="small">nombre</text>
+<ellipse cx="115.0" cy="259.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="264.0" class="small">apellido</text>
+<ellipse cx="585.0" cy="161.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="166.0" class="small">correo ?</text>
+<ellipse cx="585.0" cy="210.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="215.0" class="small">password_hash</text>
+<ellipse cx="585.0" cy="259.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="264.0" class="small">tipo_usuario</text>
+<rect x="235" y="750" width="230" height="60" rx="4" fill="#18344d" stroke="#7ebce6"/>
+<text text-anchor="middle" x="350.0" y="785.0" class="small">REGISTRO</text>
+<ellipse cx="115.0" cy="584.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="589.0" class="small">id_registro [PK]</text>
+<ellipse cx="115.0" cy="633.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="638.0" class="small">id_equipo</text>
+<ellipse cx="115.0" cy="682.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="687.0" class="small">usuario_ci ?</text>
+<ellipse cx="115.0" cy="731.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="736.0" class="small">id_ejecucion ?</text>
+<ellipse cx="115.0" cy="780.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="785.0" class="small">hash_archivo ?</text>
+<ellipse cx="115.0" cy="829.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="834.0" class="small">fecha_recepcion</text>
+<ellipse cx="115.0" cy="878.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="883.0" class="small">hostname_reportado ?</text>
+<ellipse cx="115.0" cy="927.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="932.0" class="small">sistema_operativo ?</text>
+<ellipse cx="115.0" cy="976.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="981.0" class="small">cpu ?</text>
+<ellipse cx="585.0" cy="584.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="589.0" class="small">ram_gb ?</text>
+<ellipse cx="585.0" cy="633.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="638.0" class="small">mac ?</text>
+<ellipse cx="585.0" cy="682.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="687.0" class="small">id_laboratorio_observado ?</text>
+<ellipse cx="585.0" cy="731.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="736.0" class="small">fecha</text>
+<ellipse cx="585.0" cy="780.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="785.0" class="small">nombre</text>
+<ellipse cx="585.0" cy="829.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="834.0" class="small">descripcion ?</text>
+<ellipse cx="585.0" cy="878.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="883.0" class="small">ip ?</text>
+<ellipse cx="585.0" cy="927.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="932.0" class="small">estado</text>
+<ellipse cx="585.0" cy="976.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="981.0" class="small">disco_libre_gb ?</text>
+<rect x="1835" y="180" width="230" height="60" rx="4" fill="#18344d" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1950.0" y="215.0" class="small">COMENTARIO</text>
+<ellipse cx="1715.0" cy="161.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1715.0" y="166.0" class="small">id_comentario [PK]</text>
+<ellipse cx="1715.0" cy="210.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1715.0" y="215.0" class="small">id_equipo</text>
+<ellipse cx="1715.0" cy="259.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1715.0" y="264.0" class="small">autor_ci</text>
+<ellipse cx="2185.0" cy="185.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="2185.0" y="190.5" class="small">contenido</text>
+<ellipse cx="2185.0" cy="234.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="2185.0" y="239.5" class="small">fecha_hora</text>
+<rect x="235" y="1530" width="230" height="60" rx="4" fill="#18344d" stroke="#7ebce6"/>
+<text text-anchor="middle" x="350.0" y="1565.0" class="small">REGISTRO_DISCO</text>
+<ellipse cx="115.0" cy="1486.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="1491.5" class="small">id_registro [PK]</text>
+<ellipse cx="115.0" cy="1535.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="1540.5" class="small">orden [PK]</text>
+<ellipse cx="115.0" cy="1584.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="1589.5" class="small">dispositivo ?</text>
+<ellipse cx="115.0" cy="1633.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="115.0" y="1638.5" class="small">modelo ?</text>
+<ellipse cx="585.0" cy="1511.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="1516.0" class="small">num_serie ?</text>
+<ellipse cx="585.0" cy="1560.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="1565.0" class="small">tipo ?</text>
+<ellipse cx="585.0" cy="1609.0" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="585.0" y="1614.0" class="small">capacidad_total_gb ?</text>
+<rect x="1385" y="1530" width="230" height="60" rx="4" fill="#18344d" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1500.0" y="1565.0" class="small">REGISTRO_SISTEMA_ARCHIVOS</text>
+<ellipse cx="1265.0" cy="1486.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1265.0" y="1491.5" class="small">id_registro [PK]</text>
+<ellipse cx="1265.0" cy="1535.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1265.0" y="1540.5" class="small">orden [PK]</text>
+<ellipse cx="1265.0" cy="1584.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1265.0" y="1589.5" class="small">orden_disco ?</text>
+<ellipse cx="1265.0" cy="1633.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1265.0" y="1638.5" class="small">dispositivo ?</text>
+<ellipse cx="1735.0" cy="1486.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1735.0" y="1491.5" class="small">punto_montaje ?</text>
+<ellipse cx="1735.0" cy="1535.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1735.0" y="1540.5" class="small">tipo ?</text>
+<ellipse cx="1735.0" cy="1584.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1735.0" y="1589.5" class="small">capacidad_total_gb ?</text>
+<ellipse cx="1735.0" cy="1633.5" rx="110.0" ry="20.0" fill="#152335" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1735.0" y="1638.5" class="small">espacio_libre_gb ?</text>
+<polygon points="1150.0,420 1235,460.0 1150.0,500 1065,460.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1150.0" y="465.0" class="small">contiene</text>
+<polygon points="750.0,740 835,780.0 750.0,820 665,780.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="750.0" y="785.0" class="small">tiene capturas</text>
+<polygon points="350.0,420 435,460.0 350.0,500 265,460.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="350.0" y="465.0" class="small">realiza</text>
+<polygon points="1550.0,20 1635,60.0 1550.0,100 1465,60.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1550.0" y="65.0" class="small">escribe</text>
+<polygon points="1950.0,740 2035,780.0 1950.0,820 1865,780.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1950.0" y="785.0" class="small">recibe</text>
+<polygon points="750.0,420 835,460.0 750.0,500 665,460.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="750.0" y="465.0" class="small">observado en</text>
+<polygon points="350.0,1150 435,1190.0 350.0,1230 265,1190.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="350.0" y="1195.0" class="small">incluye discos</text>
+<polygon points="1050.0,1150 1135,1190.0 1050.0,1230 965,1190.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="1050.0" y="1195.0" class="small">incluye volúmenes</text>
+<polygon points="900.0,1520 985,1560.0 900.0,1600 815,1560.0" fill="#243b32" stroke="#7ebce6"/>
+<text text-anchor="middle" x="900.0" y="1565.0" class="small">asocia volumen</text>
+<text x="30" y="1850" font-size="19">SGLAB · MER de la BD actual · PK = clave primaria · ? = atributo nullable · N = muchos</text>
+<text x="30" y="1880" font-size="17">tipo_usuario: ALUMNO / DOCENTE / ASISTENTE / ADMINISTRADOR · registro.estado: OK / ERROR</text>
+<text x="30" y="1910" font-size="17">Asociación volumen–disco: FK compuesta (id_registro, orden_disco) → registro_disco (id_registro, orden).</text></svg>

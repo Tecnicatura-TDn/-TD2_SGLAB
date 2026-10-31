@@ -1,0 +1,10 @@
+[Unit]
+Description=SGLAB - Revisar envíos pendientes cada dos minutos
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=2min
+Unit=sglab-enviar.service
+
+[Install]
+WantedBy=timers.target
