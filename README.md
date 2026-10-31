@@ -8,6 +8,8 @@ Enlace a la carpeta de drive para el equipo de Base de Datos: [enlace a drive](h
 
 - `doc/` Documentación, diagramas y desiciónes.
 - `server/` Scripts de linux.
+- `setup/` : Carpeta contenedora del ``provision.sh`` y sus recursos.
+
 
 ## Servidor
 
@@ -15,7 +17,5 @@ Dentro de la carpeta `/server/`:
 
 * `SGLAB-copia` : __Carpeta principal__ de la configuración del proyecto.
 * `docker-resources` : Recursos docker para la __carpeta princilpal__.
-* `setup` : Carpeta contenedora del ``provision.sh`` y sus recursos.
-
 ---
 _Repositorio del grupo TD2 para el **SGLAB**_
