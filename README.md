@@ -8,8 +8,12 @@ Enlace a la carpeta de drive para el equipo de Base de Datos: [enlace a drive](h
 
 - `doc/` Documentación, diagramas y desiciónes.
 - `server/` Scripts de linux.
-- `setup/` : Carpeta contenedora del ``provision.sh`` y sus recursos.
+- `provision/` : Carpeta contenedora del ``provision.sh`` y sus recursos.
 
+## Provision
+
+__Qué permisos necesita el provision.sh__
+__Cómo se ejecuta el provision__
 
 ## Servidor
 
