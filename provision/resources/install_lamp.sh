@@ -4,7 +4,7 @@ install_lamp() {
     log "Instalando pila LAMP (Apache, MySQL Server y PHP 8.3)..."
 
     case "$OS" in
-        debian|ubuntu|kali|zorin|mint)
+        debian|ubuntu|zorin|mint)
             # 1. Crear directorio seguro para la llave GPG (gracias a coreutils/install)
             sudo install -m 0755 -d /etc/apt/keyrings
 
@@ -33,6 +33,18 @@ install_lamp() {
             sudo systemctl enable --now mariadb
 
             log "LAMP con PHP 8.3 instalado con éxito en base Debian/Ubuntu"
+            ;;
+        kali)
+            # 1. Limpiar los archivos huérfanos del repositorio de Sury obsoleto/incompatible
+            if [ -e /etc/apt/sources.list.d/php.list /etc/apt/keyrings/php.gpg ]; then
+                sudo rm -f /etc/apt/sources.list.d/php.list /etc/apt/keyrings/php.gpg
+            fi
+            # 2. Actualizar el índice de paquetes nativos de Kali Linux
+            sudo apt update -y
+
+            # 3. Instalar PHP, el módulo de Apache (si aplica) y la extensión nativa para MariaDB/MySQL
+            sudo apt install -y php php-mysql libapache2-mod-php php-cli
+
             ;;
         rhel|centos|rocky|fedora)
             # Detectar gestor de paquetes de forma segura (por si se ejecuta independiente)

@@ -93,7 +93,7 @@ menu_provisiones() {
         case $choice in
             #Agregar memoría ahora están más cerca del exito
             1)
-                log "Aprovisionando stack docker-laravel"
+                log "Aprovisionando stack docker-docker_compose"
                 provision_docker_laravel
                 choice=0
                 ;;

@@ -102,20 +102,9 @@ install_docker() {
             error "El provision no soporta éste sistema operativo: '$OS'"
             ;;
     esac
-    
-   
-    # ... (código de instalación de Docker original)
-}
+    sudo usermod -aG docker $usuario
 
-clone_repository() {
-    local repo_url=$1
-    local target_dir=${2:-"/opt/laravel-app"}
-    # ... (código para clonar repositorio original)
-}
 
-setup_project() {
-    log "Configurando el proyecto Laravel..."
-    # ... (código de configuración del proyecto Laravel original)
 }
 
 # Funcion main de docker
@@ -123,20 +112,7 @@ provision_docker_laravel() {
     log "Iniciando aprovisionamiento para entorno de desarrollo Laravel con Docker..."
     install_docker
     agregar_memoria 1
-   # install_docker_compose
-   #setup_ssh
-   setup_github_ssh
-   log "Todo listo, siguiente paso: terminar la programación del proyecto :P saludo a los pibe del equipo FNLabs"
-   # read -p "Introduce la URL SSH de tu repositorio GitHub (ej: git@github.com:usuario/repo.git): " repo_url
-   # if [ -z "$repo_url" ]; then
-   #     error "Debes proporcionar una URL de repositorio válida"
-    #fi
+    setup_github_ssh
+    log "Todo listo, siguiente paso: terminar la programación del proyecto :P saludo a los pibe del equipo FNLabs"
 
-    #clone_repository "$repo_url"
-    #setup_project
-
-   # log "Provisionamiento completado exitosamente!"
-    #info "Acceso a la aplicación: http://localhost"
-    #info "Acceso a PHPMyAdmin: http://localhost:8080"
-    #warn "Recuerda que has tenido que agregar manualmente la clave SSH a tu cuenta de GitHub."
 }

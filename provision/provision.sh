@@ -34,6 +34,23 @@ check_sudo() {
     fi
 }
 
+# Crear usuario base en el sistema
+alta_usuario() {
+    usuario="BASE-TD2"
+    if sudo grep -wi "$usuario" /etc/passwd >/dev/null 2>&1; then
+        log "Usuario base $usuario ya existe"
+    else
+        log "Usuario base $usuario no existe, creandolo..."
+        # Reconociendo si existe docker
+        if command -v docker >/dev/null 2>&1; then
+            sudo useradd -m -s /bin/bash -G docker "$usuario" && log "Usuario $usuario creado con exito" || warn "Error al agregar el usuario $usuario, exit code: $?"
+        else
+            sudo useradd -m -s /bin/bash "$usuario" && log "Usuario $usuario creado con exito" || warn "Error al agregar el usuario $usuario, exit code: $?"
+        fi
+    fi
+}
+
+
 detect_os() {
 if [ -f /etc/os-release ]; then
 . /etc/os-release
@@ -93,7 +110,7 @@ menu_provisiones() {
         case $choice in
             #Agregar memoría ahora están más cerca del exito
             1)
-                log "Aprovisionando stack docker-laravel"
+                log "Aprovisionando stack docker-docker_compose"
                 provision_docker_laravel
                 choice=0
                 ;;
@@ -120,22 +137,34 @@ main() {
     # Ahora comienza la cosa
     echo ""
     mensaje "Comenzando el aprovisionamiento"
+    # Cremos lo necesario para registrar la memoria del sistema
     crear_memoria
+    # Si ya tenía docker instalado se le registra automaticamente la memoria a 1
+    detectar_dependencias
+    # Cargamos las variables de entorno y creamos la variable $OS con el nombre del sistema
     detect_os
     info "Tipo de distro: $OS $OS_VERSION"
+    # Verificamos que el script soporte tu distro de linux
     check_system
+    # Actualizamos el sistema
     update_system
     printf "\n"
+    # Instalamos herramientas basicas
     install_basic_tools
+    # Agregamos el usuario base del sistema 
+    alta_usuario
+    # Operamos con la memoria del proyecto
     operar_memoria
     if [ "$memoria" != "0" ] && [ "$memoria" != "3" ]; then
         mensaje "¿Deseas instalar otro entorno? [ENTER/NO]"
         read otravez
         case "$otravez" in
                 "")
+                    # Entrar al menú
                     menu_provisiones
                     ;;
                 [Nn][Oo])
+                    # Imprimir mensaje salida y exit 1
                     mensaje_saliendo
                     ;;
                 *)
@@ -143,6 +172,7 @@ main() {
                     ;;
             esac
     else
+        # Si el provision está en 0 o ya tiene todo (3) pasa directamente al menu
         menu_provisiones
     fi
 }

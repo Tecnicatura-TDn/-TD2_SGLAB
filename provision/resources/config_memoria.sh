@@ -1,7 +1,15 @@
 
 crear_memoria() {
     touch ./memoria.txt
-    [ -z "$(cat ./memoria.txt)" ] && printf "aprovisionamiento:0" > ./memoria.txt || continue
+    if [ -z "$(cat ./memoria.txt)" ]; then 
+    printf "aprovisionamiento:0" > ./memoria.txt 
+    fi
+}
+
+detectar_dependencias() {
+    if command -v docker >/dev/null 2>&1; then
+        agregar_memoria 1
+    fi
 }
 
 agregar_memoria() {
@@ -27,13 +35,14 @@ operar_memoria() {
     #memoria=$(obtener_memoria)
     obtener_memoria
     if [ "$memoria" = "0" ]; then
-        warn "Aún no se a configurado el entorno docker-laravel ó LAMP"
+        warn "Aún no se a configurado el entorno docker-docker_compose ó LAMP"
     elif [ "$memoria" = "1" ]; then
-        log "Ya se configuró el entorno docker-laravel"
+        log "Ya se configuró el entorno docker-docker_compose"
     elif [ "$memoria" = "2" ]; then
         log "Ya se configuró el entorno LAMP"
     elif [ "$memoria" = "3" ]; then
-        log "Ya se configuraron los dos entornos docker-laravel y LAMP"
+        log "Ya se configuraron los dos entornos docker-docker_compose y LAMP"
         exit 1
     fi
 }
+
