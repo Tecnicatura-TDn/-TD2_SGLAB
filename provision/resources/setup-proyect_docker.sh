@@ -68,22 +68,41 @@ install_docker() {
             echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
             sudo apt update -qq && sudo apt install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && log "Docker instalado con éxito" || warn "Problemas al instalar docker, último código de comando: $?"
         ;;
-        ubuntu|kali|zorin|mint)
-                    sudo install -m 0755 -d /etc/apt/keyrings
-                    
-                    # Mapear correctamente la URL de Docker según la distro base (debian o ubuntu)
-                    DISTRO_URL="ubuntu"
-                    curl -fsSL "https://download.docker.com/linux/$DISTRO_URL/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-                    sudo chmod a+r /etc/apt/keyrings/docker.gpg
-                    
-                    # Obtener el codename de forma segura compatible con sh
-                    . /etc/os-release
-                    CODENAME="${VERSION_CODENAME:-$UBUNTU_CODENAME}"
-                    
-                    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$DISTRO_URL $CODENAME stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-                    
-                    sudo apt update -qq && sudo apt install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && log "Docker instalado con éxito" || warn "Problemas al instalar docker, último código de comando: $?"
-                ;;
+        ubuntu|zorin|mint)
+            sudo install -m 0755 -d /etc/apt/keyrings
+            
+            # Mapear correctamente la URL de Docker según la distro base (debian o ubuntu)
+            DISTRO_URL="ubuntu"
+            curl -fsSL "https://download.docker.com/linux/$DISTRO_URL/gpg" | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            sudo chmod a+r /etc/apt/keyrings/docker.gpg
+            
+            # Obtener el codename de forma segura compatible con sh
+            . /etc/os-release
+            CODENAME="${VERSION_CODENAME:-$UBUNTU_CODENAME}"
+            
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/$DISTRO_URL $CODENAME stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            
+            sudo apt update -qq && sudo apt install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && log "Docker instalado con éxito" || warn "Problemas al instalar docker, último código de comando: $?"
+        ;;
+        kali)
+            # 1. Remover cualquier rastro del repositorio incorrecto de Ubuntu para que no rompa el apt update
+            if [ -e /etc/apt/sources.list.d/docker.list ]; then
+            sudo rm -f /etc/apt/sources.list.d/docker.list
+            fi
+
+            # 2. Actualizar las fuentes oficiales de Kali
+            sudo apt update -y
+
+            # 3. Instalar Docker desde los repositorios nativos de Kali Linux
+            sudo apt install -y docker.io docker-compose
+
+            # 4. Habilitar e iniciar el servicio de Docker
+            sudo systemctl enable --now docker
+
+            # 5. Ahora que Docker está instalado y el grupo 'docker' existe, podés añadir a tu usuario
+            sudo usermod -aG docker kali
+
+        ;;
         rhel|centos|rocky)
             sudo curl -fsSL https://download.docker.com/linux/centos/docker-ce.repo -o /etc/yum.repos.d/docker-ce.repo
             sudo dnf makecache -q
@@ -100,7 +119,7 @@ install_docker() {
         ;;
         *)
             error "El provision no soporta éste sistema operativo: '$OS'"
-            ;;
+        ;;
     esac
     sudo usermod -aG docker $usuario
 
