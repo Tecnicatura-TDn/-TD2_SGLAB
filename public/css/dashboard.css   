@@ -1,0 +1,91 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #f4f6fb;
+    color: #2d3748;
+    min-height: 100vh;
+}
+
+.encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+}
+
+.encabezado h1 {
+    font-size: 1.3rem;
+}
+
+.encabezado nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.salir {
+    color: #fff;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+}
+
+.salir:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.contenido {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.bienvenida {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+}
+
+.bienvenida h2 {
+    margin-bottom: 0.5rem;
+}
+
+.bienvenida p {
+    color: #4a5568;
+}
+
+.tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+}
+
+.tarjeta-info {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border-top: 4px solid #667eea;
+}
+
+.tarjeta-info h3 {
+    margin-bottom: 0.6rem;
+}
+
+.tarjeta-info p {
+    font-size: 0.95rem;
+    color: #4a5568;
+    line-height: 1.5;
+}

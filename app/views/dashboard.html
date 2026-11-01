@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <header class="encabezado">
+        <h1>Panel principal</h1>
+        <nav>
+            <span>Hola, <strong>{{nombre}}</strong></span>
+            <a href="logout.php" class="salir">Cerrar sesión</a>
+        </nav>
+    </header>
+
+    <main class="contenido">
+        <section class="bienvenida">
+            <h2>Bienvenido, {{nombre}}</h2>
+            <p>Has iniciado sesión como <strong>{{email}}</strong> el {{fecha}}.</p>
+        </section>
+
+        <section class="tarjetas">
+            <article class="tarjeta-info">
+                <h3>Tu cuenta</h3>
+                <p>Consulta tus datos de acceso y el estado de tu sesión.</p>
+            </article>
+
+            <article class="tarjeta-info">
+                <h3>Base de datos</h3>
+                <p>La aplicación está conectada a MySQL mediante PDO.</p>
+            </article>
+
+            <article class="tarjeta-info">
+                <h3>Próximos pasos</h3>
+                <p>Aquí se agregarán los módulos del proyecto.</p>
+            </article>
+        </section>
+    </main>
+</body>
+</html>

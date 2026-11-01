@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-class LoginModel
+class Dashboard
 {
     private PDO $pdo;
 
@@ -22,24 +22,27 @@ class LoginModel
     }
 
     /**
-     * Devuelve los datos del usuario si las credenciales son válidas; null en caso contrario.
+     * Número total de usuarios registrados.
      */
-    public function autenticar(string $email, string $password): ?array
+    public function totalUsuarios(): int
+    {
+        return (int) $this->pdo->query('SELECT COUNT(*) FROM usuarios')->fetchColumn();
+    }
+
+    /**
+     * Últimos usuarios registrados, del más reciente al más antiguo.
+     */
+    public function ultimosUsuarios(int $limite = 5): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT id, nombre, email, password_hash
+            'SELECT id, nombre, email, creado
              FROM usuarios
-             WHERE email = :email
-             LIMIT 1'
+             ORDER BY creado DESC, id DESC
+             LIMIT :limite'
         );
-        $stmt->execute([':email' => $email]);
-        $usuario = $stmt->fetch();
+        $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
+        $stmt->execute();
 
-        if (!$usuario || !password_verify($password, $usuario['password_hash'])) {
-            return null;
-        }
-
-        unset($usuario['password_hash']);
-        return $usuario;
+        return $stmt->fetchAll();
     }
 }

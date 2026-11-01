@@ -45,7 +45,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* Si no hay error, el bloque no se muestra */
 .error:empty {
     display: none;
 }

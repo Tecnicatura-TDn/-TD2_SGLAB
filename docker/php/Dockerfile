@@ -1,6 +1,6 @@
 FROM php:apache
 
-# Dependencias del sistema para compilar las extensiones que no vienen incluidas
+# Dependencias del sistema para compilar las extensiones
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpng-dev \
         libjpeg-dev \
@@ -9,8 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Extensiones PHP (pdo, pdo_mysql, mysqli, mbstring, xml, curl y opcache ya vienen en la imagen)
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+# Extensiones PHP. pdo_mysql y mysqli NO vienen en la imagen base.
+RUN docker-php-ext-install pdo_mysql mysqli \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" gd zip intl bcmath exif
 
 # Módulos de Apache
