@@ -1,2 +1,10 @@
-# Logs creados mientras probaba la ejecución
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.sglab-infra.done
+var/
+server/web/app/vendor/
+
+# Logs del servicio agregado en el commit 0a015f7.
 /logs/

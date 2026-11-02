@@ -1,0 +1,24 @@
+# Configuración y archivos locales
+.env
+.env.*
+!.env.example
+.sglab-infra.done
+.venv/
+__pycache__/
+*.py[cod]
+
+# Datos, registros y respaldos
+var/
+logs/
+backups/
+
+# Claves privadas y almacenes de credenciales
+.ssh/
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_ed25519
