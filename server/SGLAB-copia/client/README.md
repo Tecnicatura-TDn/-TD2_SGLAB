@@ -59,6 +59,10 @@ El receptor necesita SCP/SFTP, SSH y permiso para ejecutar `chmod` y `mv` en
 incoming. No funciona con una cuenta limitada exclusivamente a internal-sftp.
 El host remoto configurado debe ser un hostname o IPv4 y el directorio remoto
 una ruta absoluta sin espacios. El servidor debe tener incoming creado previamente.
+La ruta predeterminada es `/srv/sglab/incoming`; ajustarla con
+`--directorio-remoto`, `directorio_remoto` en el JSON o el perfil para que coincida
+con la carpeta de recepción real del servidor. Esta ruta pertenece al servidor,
+no a la PC que ejecuta el recolector.
 
 El usuario de carga y el del daemon pueden ser distintos, compartiendo un grupo.
 Por ejemplo, con usuarios `sglab_upload` y `sglab` ya creados y un grupo compartido
@@ -68,7 +72,7 @@ Por ejemplo, con usuarios `sglab_upload` y `sglab` ya creados y un grupo compart
 sudo usermod -aG sglab-ingest sglab_upload
 sudo usermod -aG sglab-ingest sglab
 sudo install -d -m 0750 -o sglab -g sglab-ingest /srv/sglab
-sudo install -d -m 2770 -o sglab -g sglab-ingest /home/facu/SGLAB-copia/server/incoming
+sudo install -d -m 2770 -o sglab -g sglab-ingest /srv/sglab/incoming
 ```
 
 Crear previamente el grupo si no existe. Reiniciar el daemon y abrir una nueva
@@ -151,6 +155,26 @@ Ampliar la captura de sistemas de archivos queda pendiente. No se altera el esta
 administrativo del equipo. Las copias enviadas se conservan localmente; definir
 una política de retención según el espacio disponible.
 
+### Discos Linux: Fedora y dual boot
+
+Desde la versión del script **1.1.1**, se excluyen `zramN`, `ramN` y `loopN`
+aunque `lsblk` los presente como `TYPE=disk`. Se conservan los discos reportados
+por el sistema (NVMe, SATA y virtio en máquinas virtuales); las particiones,
+LVM y dispositivos cifrados se recorren para encontrar sus montajes, sin contarlos
+como discos independientes. El marcador `[SWAP]` no se trata como una ruta.
+
+`zram` almacena datos comprimidos en memoria: no es un SSD adicional. El dual boot
+no es la causa de esa detección. Referencias: [documentación de zram](https://docs.kernel.org/admin-guide/blockdev/zram.html)
+y [lsblk](https://man7.org/linux/man-pages/man8/lsblk.8.html).
+
+El espacio libre sigue correspondiendo a sistemas de archivos montados y legibles;
+no representa necesariamente el espacio libre completo de Windows y Linux juntos.
+Si un disco real no tiene montajes accesibles, se conserva en el inventario y se
+informa la lectura no disponible. No se ocultan fallos reales para obtener cero
+errores. El formato TOML continúa en **1.1**, compatible con `spawn.sh`.
+
+Prueba de Fedora y pasos para repetirla: [PRUEBA-FEDORA.md](../docs/PRUEBA-FEDORA.md).
+
 ## Verificación
 
 ```bash
@@ -167,7 +191,7 @@ envío SSH requieren además una prueba en los equipos y servidor reales.
 `client/configurar.py` detecta Windows/Linux y permite ingresar servidor, usuario,
 puerto, laboratorio y rutas una sola vez. No cambia el recolector para cada PC.
 El perfil `client/perfiles/pruebas.json` ya contiene el servidor de pruebas
-192.168.50.83, usuario facu, puerto 22 y carpeta /home/facu/SGLAB-copia/server/incoming. Se puede
+192.168.50.83, usuario facu, puerto 22 y carpeta /home/facu/-TD2_SGLAB/SGLAB/var/incoming. Se puede
 reutilizar en varias PC; los argumentos de CLI prevalecen sobre el perfil.
 Para producción crear otro perfil con el nombre DNS del servidor cuando exista.
 Un nombre DNS estable evita cambiar las PC si luego cambia la IP.
@@ -184,9 +208,12 @@ No se guarda la contraseña ni se pasa como argumento. No requiere sshpass.
 
 El instalador agrega la pública a ~/.ssh/authorized_keys del usuario receptor,
 evita duplicar esa clave y ajusta permisos: .ssh a 0700 y authorized_keys a 0600.
-Después comprueba el acceso por clave en modo no interactivo. Solo si tiene éxito
-continúa con la configuración y el registro de tareas. No crea incoming ni cambia
-sus permisos; el servidor debe tener la recepción preparada previamente.
+La configuración local `cliente.json` y los scripts de captura se preparan antes
+de la conexión SSH. Después se comprueba el acceso por clave en modo no interactivo.
+Solo si tiene éxito continúa con el registro de tareas. Si falla SSH, se conserva
+la configuración y se puede generar una captura manual; el envío queda pendiente
+hasta resolver la conexión. No crea incoming ni cambia sus permisos; el servidor
+debe tener la recepción preparada previamente.
 
 Windows, PowerShell como administrador:
 
@@ -219,12 +246,16 @@ aceptadas en el known_hosts de la instalación.
 
 Sin `--instalar` prepara los archivos en ./sglab-cliente (o --destino) sin
 registrar tareas; la autorización SSH se realiza igualmente si corresponde.
-Si falla la conexión, los archivos preparados se conservan para diagnóstico;
-revisar y mover o retirar la carpeta incompleta antes de repetir la instalación.
+Si falla la conexión, los archivos preparados se conservan para diagnóstico y se
+puede completar la instalación con `--reanudar`. El BAT de Windows ya utiliza
+esa opción. También recupera instalaciones del configurador anterior que quedaron
+solo con la clave SSH y known_hosts, antes de poder escribir el JSON.
 
-Por seguridad no reemplaza una carpeta de instalación no vacía. Si ya se configuró
-C:\ProgramData\SGLAB manualmente, revisar esa configuración antes de instalar de
-nuevo. Para cambiar IP, usuario, puerto o laboratorio después, editar cliente.json
+Sin `--reanudar` no reemplaza una carpeta de instalación no vacía. Al reanudar se
+conservan la configuración, las claves y los hosts conocidos; se actualizan los
+scripts copiados y se vuelve a comprobar SSH y registrar las tareas. No cambia
+automáticamente el servidor de una configuración existente ni elimina archivos
+de carpetas desconocidas. Para cambiar IP, usuario, puerto o laboratorio, editar cliente.json
 como administrador; no reinstalar ni editar recopilar.py. Un cambio de identidad
 SSH del servidor requiere actualizar también known_hosts tras verificar la huella.
 La autorización de la clave pública debe existir para el usuario receptor nuevo.
@@ -254,6 +285,37 @@ El comando equivalente del configurador es `python configurar.py --instalar --po
 El modo anterior con SYSTEM sigue disponible explicitamente sin `--por-usuario`,
 usando una consola administrativa y Python instalado para todo el sistema.
 
+### Si no aparece cliente.json o falla la instalación
+
+La ruta del modo por usuario es **%LOCALAPPDATA%\SGLAB\cliente.json**. Ejecutar el
+instalador con el mismo usuario que luego abrirá Recopilar-SGLAB.bat.
+El instalador ahora muestra la etapa del error y guarda un registro en:
+
+```text
+%LOCALAPPDATA%\SGLAB-instalacion.log
+```
+
+Se puede pegar esa ruta en el Explorador de Windows y abrir el archivo de texto.
+Revisar las líneas **ERROR en ...** y **No se completó la configuración**. La
+consola queda abierta al terminar y el BAT conserva el código de error; no anuncia
+éxito cuando falla el configurador. El registro queda fuera de la carpeta SGLAB
+para no bloquear una instalación nueva por encontrarla no vacía.
+
+Copiar la carpeta `client` actualizada y ejecutar Instalar-SGLAB.bat otra vez.
+No borrar las claves ni la carpeta de instalación para reintentar. Las carpetas
+desconocidas o configuraciones con rutas personalizadas requieren revisar el
+mensaje concreto; no se reemplazan automáticamente.
+
+Si el fallo ocurre antes de preparar el cliente (por ejemplo, falta Python u
+OpenSSH, o Windows rechaza los permisos), todavía puede faltar el JSON. Si falla
+SSH después de prepararlo, el JSON queda disponible pero la instalación de tareas
+no se considera completada. Obtener el mensaje exacto del registro para resolver
+la dependencia que falta. La versión actual sigue sin solicitar elevación.
+
+La recuperación se verificó con pruebas de orquestación y fallos simulados en
+Windows, además de las pruebas locales de autorización SSH. La ejecución completa
+en el Windows afectado continúa pendiente.
+
 ## Ejecutar una captura con doble clic
 
 Despues de instalar el cliente, hacer doble clic en `Recopilar-SGLAB.bat`.
@@ -277,3 +339,45 @@ Las tareas automaticas siguen usando cliente.json sin mostrar formularios.
 Una cedula inexistente en usuarios se conserva en el TOML/descripcion, pero el
 importador deja registro.usuario_ci en NULL. El laboratorio oficial sigue siendo
 el asignado al equipo en la BD.
+
+
+## Diagnóstico de envío SSH/SCP
+
+El cliente verifica por SSH que la carpeta remota exista y permita escritura y
+acceso antes de enviar el `.part`. Luego transfiere por SCP y finalmente publica
+el TOML por SSH mediante chmod/mv. Un error indica la etapa: **Verificación del
+destino**, **Transferencia SCP** o **Publicación de la captura**.
+
+Los mensajes distinguen huella desconocida/cambiada, autenticación rechazada,
+clave local inválida, servidor/DNS/puerto inaccesible, permisos o carpeta de destino,
+espacio/cuota y falta de SFTP. Los fallos desconocidos informan el código de salida.
+Se clasifican firmas conocidas de OpenSSH; si el servidor devuelve otro idioma o
+formato puede aparecer el diagnóstico genérico. No se vuelca stderr remoto ni los
+argumentos, rutas sensibles o contenido de claves. No se desactiva la verificación
+de huella ni se instala automáticamente una identidad nueva del servidor.
+
+Se mantienen los reintentos configurados y los archivos pendientes. Solo después
+de confirmar SCP y publicación se mueve la captura a `enviados`. El envío no
+confirma que la ingesta haya aceptado el TOML; revisar `rejected` si no aparece en
+la web. La comprobación de permisos es preventiva: ACL, cuotas u otros cambios
+pueden hacer fallar la transferencia aunque esa comprobación haya sido correcta.
+
+### Actualizar clientes ya instalados
+
+El ZIP actualizado está en `var/distribucion/SGLAB-cliente-Windows.zip` del servidor.
+Las PC que ya recibieron un ZIP anterior no se actualizan solas. Cerrar el cliente
+y reemplazar únicamente `client/recopilar.py` de la instalación local
+(`%LOCALAPPDATA%\SGLAB\client\recopilar.py`) por la versión del paquete nuevo.
+Conservar `cliente.json`, claves SSH, known_hosts y las carpetas pendientes/enviados.
+También se puede reanudar el instalador del paquete nuevo con la configuración
+existente. No editar las claves para corregir un problema de permisos del servidor.
+
+Pruebas sin conexiones reales:
+
+```bash
+python3 -m unittest discover -s tests -p test_envio_ssh.py -v
+```
+
+Comprueban clasificación, ocultamiento de datos remotos, fallo previo sin SCP,
+publicación fallida conservando la captura y envío confirmado a `enviados`.
+Queda pendiente una prueba con OpenSSH real en una PC Windows de UTU.

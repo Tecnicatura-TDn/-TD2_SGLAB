@@ -53,7 +53,11 @@ GRANT SELECT ON sglab.* TO '${APP_USER}'@'%';
 GRANT INSERT, UPDATE ON sglab.usuarios TO '${APP_USER}'@'%';
 GRANT INSERT, UPDATE ON sglab.laboratorio TO '${APP_USER}'@'%';
 GRANT INSERT, UPDATE ON sglab.equipo TO '${APP_USER}'@'%';
+GRANT INSERT ON sglab.reporte_funcionamiento TO '${APP_USER}'@'%';
 GRANT INSERT, UPDATE ON sglab.comentario TO '${APP_USER}'@'%';
+
+GRANT INSERT, UPDATE ON sglab.asignacion_docente TO '${APP_USER}'@'%';
+GRANT INSERT ON sglab.comentario_laboratorio TO '${APP_USER}'@'%';
 
 -- Ingesta: consulta maestros e inserta capturas, sin alterar estado administrativo.
 GRANT SELECT ON sglab.* TO '${INGEST_USER}'@'%';

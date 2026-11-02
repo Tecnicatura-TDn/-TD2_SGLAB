@@ -49,3 +49,25 @@ Se puede aplicar a la BD existente sin recrear el volumen. Es repetible.
 Hacer un respaldo antes de aplicarla. No crea usuarios ni cambia sus roles.
 Las instalaciones nuevas ya incluyen este rol en `database/init/sglab.sql`.
 La autorización de las operaciones deberá implementarse en el backend PHP.
+
+## Permisos por alcance y comentarios
+
+`003_roles_asignaciones_comentarios.sql` agrega activo a usuarios, laboratorio y
+equipo, y crea asignacion_docente y comentario_laboratorio. Es repetible en
+MariaDB y no borra datos. Aplicar con respaldo previo y otorgar a la cuenta web
+INSERT/UPDATE sobre asignacion_docente e INSERT sobre comentario_laboratorio
+(ver los permisos actualizados en init/zz-users.sh). El esquema inicial ya incluye
+estos cambios para instalaciones nuevas.
+
+El esquema pasa a nueve tablas. La eliminación web es lógica (activo=0), para
+preservar diagnósticos, comentarios y relaciones. El alumno no tiene asignación
+manual: su PC se identifica por IP y última captura reciente. Los docentes sí
+tienen un laboratorio asignado con inicio y fin opcional. Ver docs/WEB.md.
+
+## Autenticación por rol
+
+`004_autenticacion_mfa_github.sql` agrega columnas MFA, ID único GitHub y versión
+de autenticación en usuarios. Aplicar con respaldo previo. Es repetible; el SQL
+inicial ya las incluye. No crea cuentas, no asigna emails y no activa GitHub.
+Los secretos MFA se cifran con una clave del volumen web_state: hay que respaldarla
+además de la BD. Ver docs/AUTENTICACION.md.

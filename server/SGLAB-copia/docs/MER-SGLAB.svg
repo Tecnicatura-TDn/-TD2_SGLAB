@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1860" height="2150" viewBox="0 0 1860 2150">
+<rect width="1860" height="2150" fill="#101827"/>
+<style>text{font-family:Arial,sans-serif;fill:#e6edf8} .field{font-size:14px} .title{font-size:17px;font-weight:bold} .rel{font-size:12px;paint-order:stroke;stroke:#101827;stroke-width:4px;stroke-linejoin:round}</style>
+<text x="60" y="45" font-size="25">SGLAB · Modelo de datos actual</text>
+<text x="60" y="75" font-size="14">PK: clave primaria · UQ: única · FK: clave foránea · ?: admite NULL · Las relaciones usan los nombres de campo.</text>
+<path d="M 1740 180 H 1762 V 180 H 500" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1766" y="180.0" class="rel">1</text>
+<path d="M 1740 205 H 1775 V 205 H 1120" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1779" y="205.0" class="rel">2</text>
+<path d="M 1740 230 H 1788 V 230 H 500" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1792" y="230.0" class="rel">3</text>
+<path d="M 500 1480 H 561 V 180 H 500" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="565" y="830.0" class="rel">4</text>
+<path d="M 500 1505 H 574 V 855 H 500" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="578" y="1180.0" class="rel">5</text>
+<path d="M 1740 880 H 1762 V 230 H 500" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1766" y="555.0" class="rel">6</text>
+<path d="M 1740 830 H 1775 V 180 H 1120" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1779" y="505.0" class="rel">7</text>
+<path d="M 500 855 H 1168 V 205 H 1120" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1172" y="530.0" class="rel">8</text>
+<path d="M 1120 880 H 1181 V 880 H 500" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1185" y="880.0" class="rel">9</text>
+<path d="M 1120 830 H 1194 V 180 H 1120" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1198" y="505.0" class="rel">10</text>
+<path d="M 1120 855 H 1142 V 205 H 500" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1146" y="530.0" class="rel">11</text>
+<path d="M 1120 1530 H 1155 V 880 H 1120" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1159" y="1205.0" class="rel">12</text>
+<path d="M 1740 1480 H 1788 V 1480 H 1120" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1792" y="1480.0" class="rel">13</text>
+<path d="M 1740 1505 H 1801 V 855 H 1120" fill="none" stroke="#7197ab" stroke-width="1.3"/>
+<text x="1805" y="1180.0" class="rel">14</text>
+<rect x="60" y="110" width="440" height="355" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="74" y="139" class="title">USUARIOS</text>
+<line x1="60" y1="153" x2="500" y2="153" stroke="#83acc7"/>
+<text x="74" y="175" class="field">ci : int(10) unsigned  [PK]</text>
+<text x="74" y="200" class="field">nombre : varchar(100)</text>
+<text x="74" y="225" class="field">apellido : varchar(100)</text>
+<text x="74" y="250" class="field">correo : varchar(254)  [UQ, ?]</text>
+<text x="74" y="275" class="field">password_hash : varchar(255)</text>
+<text x="74" y="300" class="field">tipo_usuario : ENUM</text>
+<text x="74" y="325" class="field">activo : tinyint(1)</text>
+<text x="74" y="350" class="field">totp_secret : text  [?]</text>
+<text x="74" y="375" class="field">totp_enabled : tinyint(1)</text>
+<text x="74" y="400" class="field">totp_last_step : bigint(20)  [?]</text>
+<text x="74" y="425" class="field">github_id : bigint(20) unsigned  [UQ, ?]</text>
+<text x="74" y="450" class="field">auth_version : int(10) unsigned</text>
+<rect x="680" y="110" width="440" height="130" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="694" y="139" class="title">LABORATORIO</text>
+<line x1="680" y1="153" x2="1120" y2="153" stroke="#83acc7"/>
+<text x="694" y="175" class="field">id_laboratorio : int(10) unsigned  [PK]</text>
+<text x="694" y="200" class="field">nombre : varchar(100)</text>
+<text x="694" y="225" class="field">activo : tinyint(1)</text>
+<rect x="1300" y="110" width="440" height="180" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="1314" y="139" class="title">ASIGNACION_DOCENTE</text>
+<line x1="1300" y1="153" x2="1740" y2="153" stroke="#83acc7"/>
+<text x="1314" y="175" class="field">usuario_ci : int(10) unsigned  [PK, FK]</text>
+<text x="1314" y="200" class="field">id_laboratorio : int(10) unsigned  [FK]</text>
+<text x="1314" y="225" class="field">desde : datetime</text>
+<text x="1314" y="250" class="field">hasta : datetime  [?]</text>
+<text x="1314" y="275" class="field">asignado_por_ci : int(10) unsigned  [FK]</text>
+<rect x="60" y="760" width="440" height="355" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="74" y="789" class="title">EQUIPO</text>
+<line x1="60" y1="803" x2="500" y2="803" stroke="#83acc7"/>
+<text x="74" y="825" class="field">id_equipo : int(10) unsigned  [PK]</text>
+<text x="74" y="850" class="field">num_serie : varchar(100)  [UQ, ?]</text>
+<text x="74" y="875" class="field">smbios_uuid : char(36)  [UQ, ?]</text>
+<text x="74" y="900" class="field">estado_administrativo : ENUM</text>
+<text x="74" y="925" class="field">hostname : varchar(255)  [?]</text>
+<text x="74" y="950" class="field">mac : char(17)  [?]</text>
+<text x="74" y="975" class="field">cpu : varchar(255)  [?]</text>
+<text x="74" y="1000" class="field">ram_gb : decimal(10,2) unsigned  [?]</text>
+<text x="74" y="1025" class="field">disco_tipo : varchar(30)  [?]</text>
+<text x="74" y="1050" class="field">disco_total_gb : decimal(12,2) unsigned  [?]</text>
+<text x="74" y="1075" class="field">id_laboratorio : int(10) unsigned  [FK, ?]</text>
+<text x="74" y="1100" class="field">activo : tinyint(1)</text>
+<rect x="680" y="760" width="440" height="505" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="694" y="789" class="title">REGISTRO</text>
+<line x1="680" y1="803" x2="1120" y2="803" stroke="#83acc7"/>
+<text x="694" y="825" class="field">id_registro : bigint(20) unsigned  [PK]</text>
+<text x="694" y="850" class="field">id_equipo : int(10) unsigned  [FK]</text>
+<text x="694" y="875" class="field">usuario_ci : int(10) unsigned  [FK, ?]</text>
+<text x="694" y="900" class="field">id_ejecucion : char(36)  [UQ, ?]</text>
+<text x="694" y="925" class="field">hash_archivo : char(64)  [?]</text>
+<text x="694" y="950" class="field">fecha_recepcion : datetime</text>
+<text x="694" y="975" class="field">hostname_reportado : varchar(255)  [?]</text>
+<text x="694" y="1000" class="field">sistema_operativo : varchar(255)  [?]</text>
+<text x="694" y="1025" class="field">cpu : varchar(255)  [?]</text>
+<text x="694" y="1050" class="field">ram_gb : decimal(10,2) unsigned  [?]</text>
+<text x="694" y="1075" class="field">mac : char(17)  [?]</text>
+<text x="694" y="1100" class="field">id_laboratorio_observado : int(10) unsigned  [FK, ?]</text>
+<text x="694" y="1125" class="field">fecha : datetime</text>
+<text x="694" y="1150" class="field">nombre : varchar(255)</text>
+<text x="694" y="1175" class="field">descripcion : text  [?]</text>
+<text x="694" y="1200" class="field">ip : varchar(45)  [?]</text>
+<text x="694" y="1225" class="field">estado : ENUM</text>
+<text x="694" y="1250" class="field">disco_libre_gb : decimal(12,2) unsigned  [?]</text>
+<rect x="1300" y="760" width="440" height="180" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="1314" y="789" class="title">COMENTARIO_LABORATORIO</text>
+<line x1="1300" y1="803" x2="1740" y2="803" stroke="#83acc7"/>
+<text x="1314" y="825" class="field">id_comentario : bigint(20) unsigned  [PK]</text>
+<text x="1314" y="850" class="field">id_laboratorio : int(10) unsigned  [FK]</text>
+<text x="1314" y="875" class="field">autor_ci : int(10) unsigned  [FK]</text>
+<text x="1314" y="900" class="field">contenido : text</text>
+<text x="1314" y="925" class="field">fecha_hora : datetime</text>
+<rect x="60" y="1410" width="440" height="180" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="74" y="1439" class="title">COMENTARIO</text>
+<line x1="60" y1="1453" x2="500" y2="1453" stroke="#83acc7"/>
+<text x="74" y="1475" class="field">id_comentario : bigint(20) unsigned  [PK]</text>
+<text x="74" y="1500" class="field">id_equipo : int(10) unsigned  [FK]</text>
+<text x="74" y="1525" class="field">autor_ci : int(10) unsigned  [FK]</text>
+<text x="74" y="1550" class="field">contenido : text</text>
+<text x="74" y="1575" class="field">fecha_hora : datetime</text>
+<rect x="680" y="1410" width="440" height="230" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="694" y="1439" class="title">REGISTRO_DISCO</text>
+<line x1="680" y1="1453" x2="1120" y2="1453" stroke="#83acc7"/>
+<text x="694" y="1475" class="field">id_registro : bigint(20) unsigned  [PK, FK]</text>
+<text x="694" y="1500" class="field">orden : smallint(5) unsigned  [PK]</text>
+<text x="694" y="1525" class="field">dispositivo : varchar(255)  [?]</text>
+<text x="694" y="1550" class="field">modelo : varchar(255)  [?]</text>
+<text x="694" y="1575" class="field">num_serie : varchar(255)  [?]</text>
+<text x="694" y="1600" class="field">tipo : ENUM  [?]</text>
+<text x="694" y="1625" class="field">capacidad_total_gb : decimal(12,2) unsigned  [?]</text>
+<rect x="1300" y="1410" width="440" height="255" rx="5" fill="#182c40" stroke="#83acc7"/>
+<text x="1314" y="1439" class="title">REGISTRO_SISTEMA_ARCHIVOS</text>
+<line x1="1300" y1="1453" x2="1740" y2="1453" stroke="#83acc7"/>
+<text x="1314" y="1475" class="field">id_registro : bigint(20) unsigned  [PK, FK]</text>
+<text x="1314" y="1500" class="field">orden : smallint(5) unsigned  [PK]</text>
+<text x="1314" y="1525" class="field">orden_disco : smallint(5) unsigned  [FK, ?]</text>
+<text x="1314" y="1550" class="field">dispositivo : varchar(255)  [?]</text>
+<text x="1314" y="1575" class="field">punto_montaje : varchar(1024)  [?]</text>
+<text x="1314" y="1600" class="field">tipo : varchar(50)  [?]</text>
+<text x="1314" y="1625" class="field">capacidad_total_gb : decimal(12,2) unsigned  [?]</text>
+<text x="1314" y="1650" class="field">espacio_libre_gb : decimal(12,2) unsigned  [?]</text>
+<text x="60" y="1915" font-size="18">Relaciones (hijo → padre)</text>
+<text x="60" y="1945" font-size="12">1. asignacion_docente (asignado_por_ci) → usuarios</text>
+<text x="960" y="1945" font-size="12">2. asignacion_docente (id_laboratorio) → laboratorio</text>
+<text x="60" y="1969" font-size="12">3. asignacion_docente (usuario_ci) → usuarios</text>
+<text x="960" y="1969" font-size="12">4. comentario (autor_ci) → usuarios</text>
+<text x="60" y="1993" font-size="12">5. comentario (id_equipo) → equipo</text>
+<text x="960" y="1993" font-size="12">6. comentario_laboratorio (autor_ci) → usuarios</text>
+<text x="60" y="2017" font-size="12">7. comentario_laboratorio (id_laboratorio) → laboratorio</text>
+<text x="960" y="2017" font-size="12">8. equipo (id_laboratorio) → laboratorio</text>
+<text x="60" y="2041" font-size="12">9. registro (id_equipo) → equipo</text>
+<text x="960" y="2041" font-size="12">10. registro (id_laboratorio_observado) → laboratorio</text>
+<text x="60" y="2065" font-size="12">11. registro (usuario_ci) → usuarios</text>
+<text x="960" y="2065" font-size="12">12. registro_disco (id_registro) → registro</text>
+<text x="60" y="2089" font-size="12">13. registro_sistema_archivos (id_registro, orden_disco) → registro_disco</text>
+<text x="960" y="2089" font-size="12">14. registro_sistema_archivos (id_registro) → registro</text>
+</svg>

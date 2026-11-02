@@ -1,0 +1,12 @@
+<?php $pending=Mfa::pending();$setup=$pending&&!$pending['totp_enabled']; ?>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Verificación en dos pasos · SGLAB</title><link rel="stylesheet" href="/assets/app.css"></head><body class="login-page">
+<?php view('institutional-header'); ?>
+<main id="contenido" class="login-content"><div class="login-card mfa-card">
+<p class="eyebrow">ASISTENTE · VERIFICACIÓN EN DOS PASOS</p><h1><?= $setup?'Configurá tu autenticador':'Verificá tu acceso' ?></h1><p class="muted"><?= $setup?'Escaneá este QR con Google Authenticator y confirmá con el código de seis dígitos.':'Ingresá el código de seis dígitos que muestra Google Authenticator.' ?></p>
+<p class="small">Cédula de la cuenta: <strong><?= e($pending['ci']??'') ?></strong></p>
+<?php if(!$setup): ?><p class="small muted">Esta cuenta ya tiene un autenticador vinculado. El QR solo se muestra durante la configuración inicial. Si necesitás vincularla nuevamente, el responsable del servidor debe restablecer esa vinculación.</p><?php endif ?>
+<?php if($error): ?><div class="alert error" role="alert"><?= e($error) ?></div><?php endif ?>
+<?php if($setup): ?><div class="qr-panel"><img src="<?= e(url('mfa_qr')) ?>" width="260" height="260" alt="QR para vincular Google Authenticator"><details><summary>Ingresar la clave manualmente</summary><code id="totp-secret"><?= e($_SESSION['mfa']['secret']) ?></code><p class="small">Cuenta SGLAB · <?= e($pending['ci']) ?> · Basada en tiempo</p></details></div><?php endif ?>
+<form method="post" action="<?= e(url('mfa')) ?>"><?= csrf() ?><input type="hidden" name="action" value="mfa_verify"><label for="code">Código de seis dígitos</label><input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="000000"><button class="button full" type="submit"><?= $setup?'Confirmar y activar':'Verificar e ingresar' ?></button></form>
+<form method="post" action="<?= e(url('login')) ?>"><?= csrf() ?><input type="hidden" name="action" value="cancel_login"><button class="logout cancel-login" type="submit">Cancelar y volver al login</button></form>
+<p class="small muted login-note">La verificación vence a los diez minutos. <?= $setup?'No compartas el QR ni la clave.':'Si perdiste el autenticador, consultá al responsable del servidor.' ?></p></div></main><?php view('institutional-footer'); ?></body></html>

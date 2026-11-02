@@ -52,7 +52,7 @@ class Captura:
         self.datos = {s: {} for s in ('meta', 'equipo', 'hardware', 'red', 'perifericos', 'diagnostico')}
         self.errores = []
         self.datos['meta'] = dict(id_ejecucion=str(uuid.uuid4()), version_formato='1.1',
-                                 version_script='1.1.0', fecha_evento=datetime.now(timezone.utc).isoformat(timespec='seconds'),
+                                 version_script='1.1.1', fecha_evento=datetime.now(timezone.utc).isoformat(timespec='seconds'),
                                  codigo_laboratorio=laboratorio, ci_reportada=ci)
 
     def leer(self, seccion, campo, funcion, error_campo=None):
@@ -121,11 +121,15 @@ class Captura:
         dispositivos = json.loads(ejecutar('lsblk', '-J', '-b', '-o', 'NAME,TYPE,SIZE,ROTA,MOUNTPOINTS'))['blockdevices']
         discos = []
         def montajes(nodo):
-            yield from (p for p in nodo.get('mountpoints', []) if p)
+            # lsblk también devuelve [SWAP]: no es una ruta montada para statvfs.
+            yield from (p for p in nodo.get('mountpoints', []) if p and p.startswith('/'))
             for hijo in nodo.get('children', []):
                 yield from montajes(hijo)
         for dispositivo in dispositivos:
-            if dispositivo['type'] != 'disk':
+            nombre = Path(dispositivo.get('name') or '').name
+            # zram y ram pueden tener TYPE=disk y ROTA=false sin ser SSD.
+            # Conservar los discos del SO, incluidos NVMe, SATA y virtio en VM.
+            if dispositivo['type'] != 'disk' or re.fullmatch(r'(?:zram|ram|loop)[0-9]+', nombre):
                 continue
             indice = len(discos)
             disco = dict(orden=indice, capacidad_total_gb=gb(dispositivo['size']))
@@ -311,6 +315,64 @@ def opciones_ssh(args):
     return opciones
 
 
+
+class ErrorEnvio(subprocess.SubprocessError):
+    """Diagnóstico seguro; nunca contiene stderr remoto ni argumentos."""
+    def __init__(self, etapa, motivo):
+        self.etapa = etapa
+        self.motivo = motivo
+        super().__init__(f'{etapa}: {motivo}')
+
+
+def diagnostico_envio(error):
+    if isinstance(error, ErrorEnvio):
+        return str(error)
+    if isinstance(error, subprocess.TimeoutExpired):
+        return 'Tiempo de espera agotado. Revisá conexión, servidor y puerto SSH.'
+    if isinstance(error, FileNotFoundError):
+        return 'Falta un archivo local o una herramienta SSH/SCP. Revisá OpenSSH y la configuración.'
+    if isinstance(error, PermissionError):
+        return 'Sin permisos locales para leer la clave/captura o guardar el archivo enviado.'
+    if isinstance(error, subprocess.CalledProcessError):
+        detail = error.stderr or b''
+        if isinstance(detail, bytes):
+            detail = detail.decode('utf-8', errors='replace')
+        detail = detail.lower()
+        cases = [
+            (('host key verification failed', 'remote host identification has changed'),
+             'No se pudo verificar la identidad del servidor. Confirmá su huella con el administrador; no desactives la verificación SSH.'),
+            (('unprotected private key', 'bad permissions', 'invalid format', 'error in libcrypto'),
+             'La clave SSH local no se puede usar. Revisá formato y permisos de la clave.'),
+            (('permission denied (publickey', 'permission denied (password', 'too many authentication failures', 'sign_and_send_pubkey'),
+             'Autenticación SSH rechazada. Revisá usuario, clave y su autorización en el servidor.'),
+            (('could not resolve hostname', 'name or service not known', 'no such host is known', 'temporary failure in name resolution'),
+             'No se pudo resolver el nombre del servidor. Revisá dirección y DNS.'),
+            (('connection refused',), 'Conexión SSH rechazada. Revisá el puerto y que SSH esté activo en el servidor.'),
+            (('connection timed out', 'operation timed out', 'no route to host', 'network is unreachable'),
+             'Servidor inaccesible. Revisá red, VPN, firewall y puerto SSH.'),
+            (('sglab_destino_no_existe',), 'La carpeta de recepción no existe o no es accesible. Revisá directorio_remoto y permisos de sus carpetas superiores.'),
+            (('sglab_destino_sin_permisos', 'permission denied', 'operation not permitted'),
+             'El usuario SSH no tiene permisos suficientes sobre el destino. Revisá escritura y acceso a la carpeta de recepción.'),
+            (('no space left on device', 'disk quota exceeded'), 'El servidor no tiene espacio disponible o superó su cuota.'),
+            (('no such file or directory',), 'No se encontró el archivo o la carpeta de destino. Revisá la configuración y los permisos.'),
+            (('subsystem request failed', 'subsystem not found'), 'El servidor no ofrece el subsistema SFTP requerido por SCP. Consultá al administrador.'),
+            (('connection reset', 'connection closed', 'broken pipe'), 'La conexión SSH se interrumpió. Revisá red y servicio SSH.'),
+        ]
+        for fragments, message in cases:
+            if any(fragment in detail for fragment in fragments):
+                return message
+        return f'El comando SSH/SCP terminó con código {error.returncode}. Consultá al administrador para revisar el servicio y sus permisos.'
+    if isinstance(error, ValueError):
+        return 'Captura o configuración local inválida. Revisá el archivo y el perfil del cliente.'
+    return 'No se pudo acceder a un archivo local o completar el envío. Revisá permisos y espacio disponible.'
+
+
+def ejecutar_envio(etapa, comando, timeout):
+    try:
+        subprocess.run(comando, check=True, timeout=timeout, capture_output=True)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise ErrorEnvio(etapa, diagnostico_envio(error)) from None
+
 def enviar_archivo(ruta, args):
     """SCP a nombre temporal y publicación atómica mediante SSH en servidor Linux."""
     if ruta.is_symlink() or not ruta.is_file():
@@ -320,13 +382,20 @@ def enviar_archivo(ruta, args):
     destino = f'{args.usuario}@{args.servidor}'
     remoto = args.directorio_remoto.rstrip('/') + '/' + ruta.name
     opciones = opciones_ssh(args)
+    # Verificar el directorio antes de subir; los mensajes remotos son marcadores fijos.
+    directory = shlex.quote(args.directorio_remoto)
+    preflight = (f'if ! test -d {directory}; then echo SGLAB_DESTINO_NO_EXISTE >&2; exit 40; '
+                 f'elif ! test -w {directory} || ! test -x {directory}; then '
+                 'echo SGLAB_DESTINO_SIN_PERMISOS >&2; exit 41; fi')
+    ejecutar_envio('Verificación del destino',
+                  ['ssh', *opciones, '-p', str(args.puerto_ssh), destino, preflight], 45)
     # Sin shell local; host, usuario y directorio se validan antes de llegar aquí.
-    subprocess.run(['scp', *opciones, '-P', str(args.puerto_ssh), str(ruta.resolve()),
-                    destino + ':' + remoto + '.part'], check=True, timeout=120,
-                   capture_output=True)
-    subprocess.run(['ssh', *opciones, '-p', str(args.puerto_ssh), destino,
-                    'chmod 0640 -- ' + shlex.quote(remoto + '.part') + ' && mv -- ' + shlex.quote(remoto + '.part') + ' ' + shlex.quote(remoto)],
-                   check=True, timeout=45, capture_output=True)
+    ejecutar_envio('Transferencia SCP',
+                  ['scp', *opciones, '-P', str(args.puerto_ssh), str(ruta.resolve()),
+                   destino + ':' + remoto + '.part'], 120)
+    ejecutar_envio('Publicación de la captura',
+                  ['ssh', *opciones, '-p', str(args.puerto_ssh), destino,
+                   'chmod 0640 -- ' + shlex.quote(remoto + '.part') + ' && mv -- ' + shlex.quote(remoto + '.part') + ' ' + shlex.quote(remoto)], 45)
 
 
 def enviar_pendientes(args):
@@ -347,7 +416,7 @@ def enviar_pendientes(args):
             except (OSError, ValueError, subprocess.SubprocessError) as exc:
                 # No volcar stderr remoto ni argumentos que pudieran contener datos.
                 print(f'No se pudo enviar {ruta.name} (intento {intento + 1}/{args.reintentos}, '
-                      f'{type(exc).__name__}). Se conserva localmente.', file=sys.stderr)
+                      f'{diagnostico_envio(exc)}). Se conserva localmente.', file=sys.stderr)
                 if intento + 1 < args.reintentos:
                     time.sleep(args.espera)
         else:
@@ -397,7 +466,7 @@ def argumentos():
     parser.add_argument('--probar-puerto', type=int, default=8080)
     parser.add_argument('--servidor', help='Servidor SSH (hostname o IPv4); omitir para solo recopilar')
     parser.add_argument('--usuario', help='Usuario SSH receptor')
-    parser.add_argument('--directorio-remoto', default='/home/facu/SGLAB-copia/server/incoming')
+    parser.add_argument('--directorio-remoto', default='/srv/sglab/incoming')
     parser.add_argument('--puerto-ssh', type=int, default=22)
     parser.add_argument('--clave', help='Ruta de la clave privada SSH; nunca guardar contraseñas')
     parser.add_argument('--known-hosts', help='Archivo con clave de host verificada previamente')

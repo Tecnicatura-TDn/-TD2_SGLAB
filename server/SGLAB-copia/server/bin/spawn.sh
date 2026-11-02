@@ -4,7 +4,7 @@ set -euo pipefail
 umask 077
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
-DATA_DIR="${SGLAB_DATA_DIR:-$PROJECT_ROOT/server}"
+DATA_DIR="${SGLAB_DATA_DIR:-$PROJECT_ROOT/var}"
 COMPOSE_DIR="${SGLAB_COMPOSE_DIR:-$PROJECT_ROOT}"
 TOMLQ_BIN="${SGLAB_TOMLQ:-tomlq}"
 INTERVALO="${SGLAB_INTERVALO:-5}"
@@ -19,7 +19,7 @@ if [[ $# -gt 1 || ( $# -eq 1 && "$1" != --once ) ]]; then
     exit 2
 fi
 [[ "$INTERVALO" =~ ^[1-9][0-9]*$ ]] || { echo 'Intervalo inválido' >&2; exit 2; }
-for comando in "$TOMLQ_BIN" jq docker flock find mktemp sha256sum date timeout; do
+for comando in "$TOMLQ_BIN" jq docker flock find mktemp sha256sum date timeout tr; do
     command -v "$comando" >/dev/null || { echo "Falta $comando" >&2; exit 2; }
 done
 mkdir -p -- "$DATA_DIR"/{incoming,processing,processed,rejected}
@@ -32,7 +32,7 @@ trap 'exit 0' TERM INT
 
 # Validación e importación de reportes TOML.
 importar() (
-    local archivo="$1" temporal digest fecha
+    local archivo="$1" temporal digest fecha resultado
     [[ -f "$archivo" && ! -L "$archivo" ]] || return 1
     [[ "$(stat -c %s -- "$archivo")" -le 1048576 ]] || { echo 'TOML mayor a 1 MiB'; return 1; }
     temporal="$(mktemp -d)" || return 1
@@ -120,6 +120,12 @@ BEGIN NOT ATOMIC
   END IF;
   SET @usuario=(SELECT ci FROM usuarios WHERE ci=\((if .meta.ci_reportada == 0 then null else .meta.ci_reportada end)|sql));
   SET @laboratorio=(SELECT id_laboratorio FROM equipo WHERE id_equipo=@equipo);
+  IF (SELECT activo FROM equipo WHERE id_equipo=@equipo) <> 1 THEN
+   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Equipo archivado';
+  END IF;
+  IF @laboratorio IS NOT NULL AND (SELECT activo FROM laboratorio WHERE id_laboratorio=@laboratorio) <> 1 THEN
+   SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Laboratorio archivado';
+  END IF;
   INSERT INTO registro (id_ejecucion,hash_archivo,id_equipo,usuario_ci,fecha,nombre,descripcion,estado,
    hostname_reportado,sistema_operativo,cpu,ram_gb,mac,ip,id_laboratorio_observado)
   VALUES (\($id),\($hash),@equipo,@usuario,\($fecha|sql),\(("Captura "+.meta.id_ejecucion)|sql),\(($d|tojson)|sql),
@@ -137,17 +143,43 @@ DELIMITER ;"
 JQ_SQL
     jq -r --arg digest "$digest" --arg fecha "$fecha" -f "$temporal/generador.jq" \
         "$temporal/datos.json" > "$temporal/consulta.sql" || return 1
-    if ! timeout 90 docker compose --project-directory "$COMPOSE_DIR" \
+    if timeout 90 docker compose --project-directory "$COMPOSE_DIR" \
         --env-file "$COMPOSE_DIR/.env" -f "$COMPOSE_DIR/compose.yaml" \
         exec -T db sh -c '
             export MYSQL_PWD="$DB_INGEST_PASSWORD"
             exec mariadb --protocol=tcp -h127.0.0.1 -u"$DB_INGEST_USER" \
                 --batch --skip-column-names --default-character-set=utf8mb4 sglab
         ' < "$temporal/consulta.sql" > "$temporal/salida.log" 2> "$temporal/error.log"; then
-        echo 'Falló la ingesta: revisar identidad del equipo, Docker, BD y credenciales.'
-        return 1
+        :
+    else
+        estado="$?"
+        echo "Falló la ingesta (salida $estado)."
+        if [[ -s "$temporal/error.log" ]]; then
+            echo 'Detalle técnico de MariaDB/Docker:'
+            # El log queda solamente dentro del trabajo rechazado. Se limita a las
+            # últimas líneas y oculta asignaciones de secretos por precaución.
+            tail -n 20 -- "$temporal/error.log" | \
+                sed -E 's/((PASSWORD|PASS|SECRET|TOKEN)[A-Z_]*=)[^[:space:]]+/\1[oculto]/Ig'
+        fi
+        return "$estado"
     fi
-    cat -- "$temporal/salida.log"
+    # El cliente mariadb puede finalizar con código 0 aunque el archivo de
+    # entrada no haya producido una confirmación de la transacción. No se debe
+    # archivar el TOML como procesado hasta recibir una de estas respuestas.
+    resultado="$(tr -d '\r\n' < "$temporal/salida.log")"
+    case "$resultado" in
+        INSERTADO|YA_PROCESADO)
+            printf '%s\n' "$resultado"
+            ;;
+        '')
+            echo 'MariaDB no confirmó la inserción; no se recibió resultado.'
+            return 1
+            ;;
+        *)
+            echo "Respuesta inesperada de MariaDB: $resultado"
+            return 1
+            ;;
+    esac
 )
 
 procesar() {

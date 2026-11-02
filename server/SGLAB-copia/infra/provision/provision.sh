@@ -1,0 +1,207 @@
+#!/bin/sh
+
+# 1. Obtiene la ruta absoluta de la carpeta donde está ESTE script
+DIR_ACTUAL="$(cd "$(dirname "$0")" && pwd)"
+
+. "$DIR_ACTUAL/resources/logs.sh"
+# funciones: log, error, warn, info, mensaje_warn, mensaje
+
+. "$DIR_ACTUAL/resources/setup_sglab.sh"
+
+. "$DIR_ACTUAL/resources/setup_ssh.sh"
+# funciones: setup_ssh, setup_github_ssh
+
+. "$DIR_ACTUAL/resources/install_lamp.sh"
+# functions: install_lamp, finalize_lamp_setup, provision_lamp_stack
+# Main function: provision_lamp_stack
+
+. "$DIR_ACTUAL/resources/setup-proyect_docker.sh"
+# functions: install_docker, install_docker_compose,clone_repository,setup_project, provision_docker_laravel
+# Main function: provision_docker_laravel
+
+. "$DIR_ACTUAL/resources/install_basic_tools.sh"
+# functions: install_basic_tools
+
+. "$DIR_ACTUAL/resources/config_memoria.sh"
+# functions: crear_memoria, agregar_memoria, obtener_memoria, operar_memoria
+
+
+# Termina el script si un comando falla
+set -e
+
+# check_sudoer
+check_sudo() {
+    if [ 0 -ne $(id -u) ]; then
+        error "Requiere superusuario para ejecutar éste script"
+    fi
+}
+
+# Crear usuario base en el sistema
+alta_usuario() {
+    usuario="BASE-TD2"
+    if id "$usuario" >/dev/null 2>&1; then
+        log "Usuario base $usuario ya existe"
+    else
+        log "Usuario base $usuario no existe, creandolo..."
+        sudo useradd -m -s /bin/bash "$usuario" || error "No se pudo crear $usuario"
+        log "Usuario $usuario creado con exito"
+    fi
+
+}
+
+
+detect_os() {
+if [ -f /etc/os-release ]; then
+. /etc/os-release
+OS=$ID
+OS_VERSION=$VERSION_ID
+fi
+}
+
+update_system() {
+    log "Actualizando el sistema..."
+    case "$OS" in
+        ubuntu|debian|mint|zorin|kali)
+            sudo apt-get update -y -qq
+            sudo apt-get upgrade -y -qq
+            ;;
+        centos|rhel|fedora|rocky)
+        if command -v dnf > /dev/null 2>&1; then
+            PKG_MANAGER="dnf"
+        else
+            PKG_MANAGER="yum"
+        fi
+            sudo "$PKG_MANAGER" update -y -q
+            # eliminará activamente los paquetes viejos que hayan sido declarados obsoletos por el sistema
+            sudo "$PKG_MANAGER" upgrade -y -q
+            ;;
+        *)
+            error "Sistema operativo no soportado: $OS"
+            ;;
+    esac
+}
+
+check_system() {
+    case "$OS" in
+        debian|ubuntu|kali|zorin|mint|rhel|fedora|rocky|centos)
+            log "Sistema $OS soportado"
+        ;;
+        *)
+            warn "Sistema operativo $OS aún no integrado"
+            error "Procura ejecutar éste script en un sistema: DEBIAN, UBUNTU, KALI, ZORIN, MINT, FEDORA, RHEL, ROCKY o CENTOS"
+        ;;
+    esac
+    
+}
+
+
+menu_provisiones() {
+    choice=1
+    while [ $choice -ne 0 ]; do
+        printf "\n"
+        info "Por favor, selecciona el tipo de entorno que deseas aprovisionar:"
+        mensaje_warn "1) Servidor SGLAB con Docker (Git, Docker, Docker Compose)"
+        mensaje_warn "2) Servidor LAMP clásico (Apache, MySQL, PHP en el host)"
+        mensaje_warn "3) Configurar receptor SSH y servicio spawn de SGLAB"
+        mensaje_warn "4) Autorizar la clave pública de un cliente SGLAB"
+        mensaje_warn "5) Clonar el repositorio SGLAB para el usuario del proyecto"
+        mensaje_warn "0) No instalar nada y salir"
+        read -p "[SISTEMA]> Introduce tu elección [0-5]: " choice
+        printf "\n"
+
+        case $choice in
+            #Agregar memoría ahora están más cerca del exito
+            1)
+                log "Aprovisionando stack docker-docker_compose"
+                provision_docker_laravel
+                choice=0
+                ;;
+            2)
+                log "Aprovisionando stack LAMP local"
+                provision_lamp_stack
+                choice=0
+                ;;
+            3)
+                configurar_sglab || warn "La configuración de SGLAB quedó pendiente; revisá el error anterior"
+                ;;
+            4)
+                autorizar_cliente_sglab || warn "No se pudo autorizar el cliente"
+                ;;
+            5)
+                clonar_repo_sglab || warn "No se pudo preparar el repositorio"
+                ;;
+            0)
+                operar_memoria
+                mensaje_saliendo 
+                ;;
+            * )
+                warn "Opcion no valida"
+                ;;
+        esac
+    done
+}
+
+# función principal
+main() {
+    # Verificar sudo
+    check_sudo
+    # Ahora comienza la cosa
+    echo ""
+    mensaje "Comenzando el aprovisionamiento"
+    # Cremos lo necesario para registrar la memoria del sistema
+    crear_memoria
+    # Si ya tenía docker instalado se le registra automaticamente la memoria a 1
+    detectar_dependencias
+    # Cargamos las variables de entorno y creamos la variable $OS con el nombre del sistema
+    detect_os
+    info "Tipo de distro: $OS $OS_VERSION"
+    # Verificamos que el script soporte tu distro de linux
+    check_system
+    # Actualizamos el sistema
+    update_system
+    printf "\n"
+    # Instalamos herramientas basicas
+    install_basic_tools
+    # Agregamos el usuario base del sistema 
+    alta_usuario
+    # Operamos con la memoria del proyecto
+    operar_memoria
+    if [ "$memoria" != "0" ] && [ "$memoria" != "3" ]; then
+        mensaje "¿Deseas instalar otro entorno? [ENTER/NO]"
+        read otravez
+        case "$otravez" in
+                "")
+                    # Entrar al menú
+                    menu_provisiones
+                    ;;
+                [Nn][Oo])
+                    # Imprimir mensaje salida y exit 1
+                    mensaje_saliendo
+                    ;;
+                *)
+                    warn "Opcion no valida"
+                    ;;
+            esac
+    else
+        # Si el provision está en 0 o ya tiene todo (3) pasa directamente al menu
+        menu_provisiones
+    fi
+}
+
+# Permite completar SGLAB sin volver a actualizar todo el sistema.
+case "${1:-}" in
+    --configurar-sglab)
+        check_sudo
+        detect_os
+        configurar_sglab
+        ;;
+    --clonar-sglab)
+        check_sudo
+        clonar_repo_sglab
+        ;;
+    --autorizar-cliente)
+        check_sudo
+        autorizar_cliente_sglab
+        ;;
+    *) main "$@" ;;
+esac

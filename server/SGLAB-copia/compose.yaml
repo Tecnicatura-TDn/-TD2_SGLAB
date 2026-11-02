@@ -1,4 +1,4 @@
-name: ${COMPOSE_PROJECT_NAME:-sglab-copia}
+name: ${COMPOSE_PROJECT_NAME:-sglab}
 
 services:
   web:
@@ -8,13 +8,23 @@ services:
 
     ports:
       - "${APP_PORT:-8080}:80"
+      - "${APP_HTTPS_PORT:-443}:443"
 
     environment:
+      SGLAB_HTTPS_ORIGIN: ${SGLAB_HTTPS_ORIGIN:?Ejecutar python3 infra/configurar-https.py IP_DEL_SERVIDOR}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-}
+      SGLAB_PC_IP_MAX_AGE_HOURS: ${SGLAB_PC_IP_MAX_AGE_HOURS:-8}
       DB_HOST: db
       DB_PORT: 3306
       DB_NAME: ${DB_NAME:?DB_NAME no definido}
       DB_USER: ${DB_APP_USER:?DB_APP_USER no definido}
       DB_PASSWORD: ${DB_APP_PASSWORD:?DB_APP_PASSWORD no definido}
+
+    volumes:
+      - web_state:/var/lib/sglab-web
+      - ./var/tls:/etc/sglab/tls:ro,Z
 
     depends_on:
       db:
@@ -60,6 +70,7 @@ services:
       - sglab_network
 
 volumes:
+  web_state:
   db_data:
     external: true
     name: sglab_db_data

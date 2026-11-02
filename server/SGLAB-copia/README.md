@@ -2,11 +2,9 @@
 
 Sistema de inventario y diagnóstico de PC de laboratorio. Este proyecto reúne el
 cliente Windows/Linux, la recepción de capturas TOML, la ingesta mediante Bash y
-la infraestructura de la futura aplicación web PHP.
+la aplicación web PHP de acceso e inventario.
 
-Esta copia trabaja como proyecto Docker **`sglab-copia`**, con la base actualizada conservada en el volumen externo `sglab_db_data`.
-El despliegue anterior de `/home/facu/SGLAB` está desactivado. Toda la operación
-activa y el desarrollo PHP se realizan desde `SGLAB-copia`.
+Esta copia trabaja como proyecto Docker **`sglab`**, con la base actualizada conservada en el volumen externo `sglab_db_data`.
 
 ## Funcionamiento previsto y estado actual
 
@@ -21,100 +19,84 @@ PC Windows/Linux
   → recopilar.py genera SGLAB-<UUID>.toml
   → SCP sube el archivo como .toml.part
   → SSH lo publica como .toml
-  → server/incoming/
+  → var/incoming/
   → spawn.sh valida e identifica el equipo
   → MariaDB dentro de Docker
-  → server/processed/ o server/rejected/, con resultado.log
+  → var/processed/ o var/rejected/, con resultado.log
 ```
 
-**La recolección y la ingesta están implementadas. La web administrativa todavía
-no:** actualmente muestra una página de prueba de Apache/PHP y conexión a MariaDB.
-El equipo debe existir en la BD antes de importar una captura. Mientras no exista
-la web, esa alta debe hacerse directamente en la BD con una cuenta autorizada.
+**La recolección, la ingesta y la primera versión web están implementadas.**
+La web incluye login, sesiones, roles de administración/consulta, laboratorios,
+alta/edición de PC, filtros y últimas capturas. El equipo debe existir en la BD
+antes de importar una captura; ahora puede registrarse desde la web.
+
+Para crear el primer administrador: `docker compose exec web php bin/crear-admin.php`.
+No hay credenciales predeterminadas. Ver [la guía de la web](docs/WEB.md).
+La dirección actual es **https://192.168.50.83**. Para acceder sin advertencias
+hay que instalar el certificado público local en Windows: [guía HTTPS](docs/HTTPS.md).
+La interfaz toma el diseño de `docs/views.zip` y `docs/public.zip`, con el logo,
+colores y recursos originales: [vistas y adaptación](docs/VISTAS.md).
+El trabajo restante, contrastado con el PDF y las pruebas reales pendientes,
+se detalla en [PENDIENTES.md](docs/PENDIENTES.md).
 
 ## Estructura del proyecto
 
 Se omiten archivos compilados de Python y el contenido de dependencias, respaldos
-y colas. Las carpetas PHP marcadas como propuestas aún no existen.
+y colas. La estructura PHP implementada se describe en docs/WEB.md.
 
 ```text
-SGLAB-copia/
-├── README.md                       # Guía general
-├── compose.yaml                    # Servicios web/db, puertos, red y volumen
-├── .env                            # Configuración y credenciales locales
-├── .env.example                    # Plantilla de variables
-├── .sglab-infra.done                # Marca usada por infra.sh
-├── .venv/                          # Entorno Python del parser TOML del servidor
-├── client/                         # Archivos que se llevan a las PC
-│   ├── README.md                   # Instrucciones detalladas del cliente
-│   ├── recopilar.py                # Captura técnica y envío de pendientes
-│   ├── configurar.py               # Configuración, claves y tareas automáticas
-│   ├── ventana.py                  # Formulario provisional: cédula/laboratorio
-│   ├── Instalar-SGLAB.bat           # Instalación Windows con doble clic
-│   ├── Recopilar-SGLAB.bat          # Abre el formulario con doble clic
-│   ├── config.example.json         # Ejemplo de configuración del cliente
-│   ├── perfiles/
-│   │   └── pruebas.json            # Datos comunes del servidor de pruebas
-│   ├── windows/
-│   │   ├── instalar-cliente.ps1     # Coordina Python y configuración por usuario
-│   │   ├── instalar-python.ps1      # Python 3.13 por usuario mediante WinGet
-│   │   ├── instalar-tareas.ps1      # Tareas por usuario o SYSTEM explícito
-│   │   └── config.example.json     # Ejemplo de rutas para Windows
-│   └── systemd/                    # Plantillas de captura/reenvío para Linux
-├── database/
-│   ├── init/
-│   │   ├── sglab.sql               # Esquema para una instalación nueva
-│   │   └── zz-users.sh             # Cuentas técnicas y permisos MariaDB
-│   ├── migrations/
-│   │   ├── README.md               # Alcance y condiciones de las migraciones
-│   │   ├── 001_modelo_inicial.sql   # Evolución del esquema antiguo de 5 tablas
-│   │   └── 002_rol_administrador.sql # Agrega ADMINISTRADOR al ENUM de usuarios
-│   └── backups/                    # Respaldos locales; pueden contener datos
-├── doc/
-│   ├── SERVIDOR.md                 # Rutas, puertos y operación de este servidor
-│   ├── MER-SGLAB.drawio            # MER editable
-│   └── MER-SGLAB.svg               # Vista del MER
+SGLAB/
+├── README.md
+├── compose.yaml                 # Proyecto Docker sglab; volumen externo sglab_db_data
+├── .env                         # Credenciales y puertos locales
+├── .env.example                 # Plantilla
+├── .venv/                       # Parser TOML del servidor (no versionar)
+├── client/                      # Recolector, configurador, ventana y lanzadores
+│   ├── recopilar.py
+│   ├── configurar.py
+│   ├── ventana.py
+│   ├── Instalar-SGLAB.bat
+│   ├── Recopilar-SGLAB.bat
+│   ├── perfiles/                # Configuración compartida del servidor
+│   ├── windows/                 # Instaladores PowerShell
+│   └── systemd/                 # Plantillas del cliente Linux
 ├── server/
-│   ├── bin/
-│   │   ├── infra.sh                # Administración de infraestructura Docker
-│   │   └── spawn.sh                # Único daemon e importador de TOML
-│   ├── incoming/                   # Recepción de archivos finales y .part
-│   ├── processing/                 # Trabajos tomados por el daemon
-│   ├── processed/                  # Capturas importadas o ya procesadas
-│   ├── rejected/                   # Capturas rechazadas; revisar resultado.log
-│   ├── .spawn.lock                 # Bloqueo para una sola instancia de ingesta
-│   ├── ingest/
-│   │   ├── README.md               # Contrato operativo y límites de ingesta
-│   │   └── requirements-bash.txt    # yq: proporciona el comando tomlq
-│   ├── systemd/
-│   │   └── sglab-spawn.service     # Servicio instalado y adaptado a este host
-│   ├── web/
-│   │   ├── Dockerfile              # Imagen PHP 8.3 + Apache + drivers MariaDB
-│   │   ├── 000-default.conf        # VirtualHost: DocumentRoot en public/
-│   │   └── app/                    # Aquí va toda la aplicación PHP
-│   │       └── public/
-│   │           └── index.php       # Página de prueba actual / entrada pública
-│   ├── provision.sh                # Copia antigua con rutas pendientes de corregir
-│   └── setup/                      # Scripts históricos de aprovisionamiento
-│       ├── README.md
-│       ├── OBJETIVO.md
-│       ├── provision.sh
-│       ├── ejemplo_provision.sh
-│       ├── memoria.txt
-│       └── resources/              # Instalación Docker/LAMP, SSH y utilidades
-└── tests/
-    └── test_configurar_ssh.py       # Pruebas locales de autorización de claves
+│   ├── bin/spawn.sh             # Única ingesta y daemon
+│   ├── ingest/                  # Dependencias y documentación
+│   ├── systemd/                 # Servicio del servidor
+│   └── web/                     # Apache, Dockerfile y app PHP en app/
+├── infra/
+│   ├── infra.sh                 # Administración Docker
+│   ├── configurar-https.py      # CA local, certificado por IP y variables TLS
+│   └── provisioning/            # Aprovisionador y resources/ unificados
+├── database/
+│   ├── init/                    # SQL inicial y cuentas técnicas
+│   └── migrations/              # Evolución del esquema
+├── var/                         # Datos de ejecución, no código
+│   ├── incoming/
+│   ├── processing/
+│   ├── processed/
+│   ├── rejected/
+│   ├── backups/
+│   ├── pki/                     # CA y clave privada; solo servidor
+│   ├── tls/                     # Certificado y clave del servidor; montaje de Apache
+│   └── certificados/            # CA pública para instalar en las PC
+├── docs/                        # MER y guía del servidor
+└── tests/                       # SSH, HTTPS, autenticación, permisos e ingesta
 ```
 
-`client` se ejecuta en las PC; `server` recibe y procesa; `database` define la BD;
-`doc` describe el proyecto; `tests` verifica parte del configurador. Los scripts
-históricos de `setup` no forman parte del circuito de ingesta activo y no se han
-validado como instalador completo. `server/provision.sh` sigue teniendo referencias
-a `server/resources`, carpeta inexistente; no usar esa copia para desplegar.
+`client` se ejecuta en las PC; `server` procesa capturas y aloja el código PHP;
+`infra` administra el entorno; `database` define el esquema; `var` contiene datos
+de ejecución y respaldos; `docs` documenta el sistema. Los aprovisionadores
+idénticos se unificaron en infra/provisioning. Se conservó el archivo de estado
+alternativo como memoria-servidor-anterior.txt. El aprovisionamiento histórico
+no se ejecutó ni se validó como instalador completo.
 
 ## Cliente Python y primera instalación en Windows
 
 `recopilar.py` funciona con Python 3.9 o posterior, sin dependencias Python externas.
+La versión 1.1.1 corrige la detección Linux de zram/discos RAM/loop y el marcador
+swap de lsblk, conservando el formato TOML 1.1. Ver [la prueba Fedora](docs/PRUEBA-FEDORA.md).
 Consulta identidad del equipo, SO, CPU, RAM, discos, red y periféricos mediante
 herramientas del sistema. En Windows usa PowerShell/CIM. Las lecturas no disponibles
 se registran en `diagnostico.errores_lectura`.
@@ -127,6 +109,10 @@ Para esta primera versión se eligió **instalar sin elevación de administrador
 4. Ingresar servidor, usuario SSH, puerto, carpeta remota y laboratorio.
 5. Verificar la huella SSH del servidor y escribir la contraseña SSH inicial.
 6. El configurador autoriza la clave pública, prueba la conexión y registra tareas.
+
+Si la instalación falla, el detalle queda en `%LOCALAPPDATA%\SGLAB-instalacion.log`.
+El instalador actualizado permite reintentar conservando la configuración y las
+claves existentes. Ver [recuperación de instalación](client/README.md#si-no-aparece-clientejson-o-falla-la-instalación).
 
 Se necesita Internet, WinGet y OpenSSH instalado previamente (`ssh`, `scp` y
 `ssh-keygen`). El instalador actual no instala componentes de Windows que requieran
@@ -216,13 +202,13 @@ arrancar el daemon. El límite es 1 MiB por TOML y 65535 bytes de JSON de captur
 SCP y publicación por SSH; el resultado de la ingesta se consulta en el servidor.
 Los pendientes locales conservan bytes y UUID entre reintentos.
 
-La cola está dentro del proyecto. Las rutas antiguas `/srv/sglab/incoming`,
+La cola está dentro de var/ en el proyecto. Las rutas antiguas `/srv/sglab/incoming`,
 `processing`, `processed` y `rejected` son enlaces de compatibilidad hacia las
-carpetas de `server`; no contienen otra copia de los datos.
+carpetas de `var`; no contienen otra copia de los datos.
 
 ## Base de datos y MER
 
-El esquema actual tiene siete tablas:
+El esquema actual tiene nueve tablas:
 
 | Tabla | Responsabilidad |
 |---|---|
@@ -230,15 +216,19 @@ El esquema actual tiene siete tablas:
 | `laboratorio` | Laboratorios disponibles. |
 | `equipo` | Identidad de cada PC, asignación y estado administrativo. |
 | `registro` | Captura histórica, equipo, usuario opcional, fecha, UUID/hash y diagnóstico. |
-| `comentario` | Comentario de un usuario sobre un equipo. |
+| `comentario` | Comentario de un alumno o personal autorizado sobre un equipo. |
+| `comentario_laboratorio` | Comentarios de docentes y personal sobre una sala. |
+| `asignacion_docente` | Laboratorio del docente, con inicio y fin opcional. |
 | `registro_disco` | Discos físicos observados por captura. |
 | `registro_sistema_archivos` | Modelo para volúmenes/sistemas de archivos; pendiente de captura. |
 
 Roles: `ALUMNO`, `DOCENTE`, `ASISTENTE`, `ADMINISTRADOR`. El rol administrador se
 agregó tanto al SQL inicial como a la BD original activa durante el trabajo, con
 respaldo de usuarios. La BD independiente de esta copia se creó posteriormente
-con el esquema actualizado. Los permisos de los roles web aún deben implementarse
-en PHP; un valor ENUM no implementa autorización.
+con el esquema actualizado. La web permite administración a ADMINISTRADOR;
+ASISTENTE es el administrador: gestiona inventario, usuarios de todos los roles y asignaciones.
+DOCENTE consulta y comenta su laboratorio vigente; ALUMNO solo el estado y
+comentarios de la PC detectada por IP. Ver docs/WEB.md para las condiciones.
 
 Relaciones principales:
 
@@ -262,36 +252,31 @@ El JSON completo se conserva en `registro.descripcion`, incluidos periféricos,
 red y espacio libre que no se distribuyen en columnas propias. El contrato actual
 no distingue sistemas de archivos y no se llena `registro_sistema_archivos`.
 
-Ver [MER editable](doc/MER-SGLAB.drawio), [MER SVG](doc/MER-SGLAB.svg) y
+Ver [MER editable](docs/MER-SGLAB.drawio), [MER SVG](docs/MER-SGLAB.svg) y
 [condiciones de migración](database/migrations/README.md). Los SQL de init se
 aplican solo al crear un volumen vacío: recrear contenedores no migra una BD
-existente. No aplicar 001 otra vez sobre el esquema actual de siete tablas.
+existente. No aplicar 001 otra vez sobre el esquema actual de nueve tablas.
 
 ## Dónde desarrollar la aplicación PHP
 
 **Toda la app va en `server/web/app/`.** Docker copia su contenido a
 `/var/www/html/`; Apache publica solamente `/var/www/html/public`.
 
-Organización propuesta para desarrollar, todavía no creada:
+Estructura implementada:
 
 ```text
 server/web/app/
-├── public/
-│   ├── index.php       # Entrada/rutas públicas
-│   └── assets/         # CSS, JavaScript e imágenes públicas
-├── src/
-│   ├── Controllers/    # Solicitudes y acciones
-│   ├── Models/         # Acceso a BD con PDO
-│   ├── Services/       # Reglas de negocio
-│   └── Middleware/     # Sesión y permisos
-├── views/              # Plantillas HTML/PHP
-└── config/             # Configuración; credenciales desde variables de entorno
+├── public/index.php     # Entrada pública y control de solicitudes
+├── public/assets/       # Estilos
+├── src/                 # PDO, Auth e Inventory
+├── views/               # Pantallas PHP/HTML
+└── bin/crear-admin.php  # Alta inicial por terminal
 ```
 
-Los módulos pendientes son login/logout, permisos, usuarios, laboratorios,
-registro/asignación de equipos, capturas y comentarios. El frontend consulta al
-backend PHP y el backend accede a MariaDB. Las PC recolectoras no se conectan a
-la BD directamente.
+Login/logout, sesiones, roles, laboratorios, PC y consulta de capturas están
+implementados. Están implementados usuarios, asignaciones docentes y comentarios por alcance.
+Quedan pendientes importaciones masivas, gráficos y exportaciones. El backend accede a MariaDB con PDO.
+Las PC recolectoras no se conectan a la BD directamente.
 
 En el contenedor web, usar las variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`
 y `DB_PASSWORD`, ya suministradas por Compose. **El host de BD es `db` y el puerto
@@ -310,14 +295,14 @@ docker compose up -d --build web
 
 | Elemento | Valor actual |
 |---|---|
-| Proyecto Compose | `sglab-copia` |
-| Directorio | `/home/facu/SGLAB-copia` |
-| Web | `http://192.168.50.83:8080` |
+| Proyecto Compose | `sglab` |
+| Directorio | `/home/facu/-TD2_SGLAB/SGLAB` |
+| Web | `https://192.168.50.83` (el acceso HTTP anterior redirige aquí) |
 | MariaDB desde el host | `127.0.0.1:3306` |
 | MariaDB entre contenedores | `db:3306`, base `sglab` |
 | Volumen de datos | `sglab_db_data` |
 | SSH de pruebas | `facu@192.168.50.83`, puerto 22 |
-| Recepción | `/home/facu/SGLAB-copia/server/incoming` |
+| Recepción | `/home/facu/-TD2_SGLAB/SGLAB/var/incoming` |
 | Servicio permanente | `sglab-spawn.service`, habilitado y activo al configurarlo |
 | Usuario del daemon | `facu`, grupos suplementarios docker y sglab-ingest |
 
@@ -345,7 +330,7 @@ sudo journalctl -u sglab-spawn -n 50 --no-pager
 sudo systemctl restart sglab-spawn
 ```
 
-Detalles adicionales: [SERVIDOR.md](doc/SERVIDOR.md) e
+Detalles adicionales: [SERVIDOR.md](docs/SERVIDOR.md) e
 [instrucciones de ingesta](server/ingest/README.md).
 
 ## Verificaciones realizadas y pendientes
@@ -357,7 +342,7 @@ Verificado durante este trabajo:
   temporal con permisos reales de la cuenta de ingesta.
 - Daemon permanente: inserción de captura/disco y deduplicación en la BD de la copia.
   Los datos sintéticos de prueba se retiraron después.
-- Página PHP conectada a MariaDB. El despliegue original fue desactivado después.
+- Web PHP con login e inventario; integración HTTP y BD real comprobada.
 - Dos pruebas locales del alta de claves: permisos, no duplicación y fallo de acceso.
 - Validación del formulario y presencia de CI/laboratorio en el TOML.
 
@@ -372,29 +357,67 @@ python3 -m unittest discover -s tests -v
 bash -n server/bin/spawn.sh
 ```
 
-La carpeta tests no contiene una suite completa de integración MariaDB; las pruebas
-de integración descritas fueron comprobaciones ejecutadas durante el trabajo.
+La integración web/BD/daemon está en tests/test_web_integration.py. Se activa con
+SGLAB_TEST_WEB=1 y retira los datos sintéticos. Ver docs/WEB.md para condiciones.
 
 Próximos pasos:
 
 1. Probar una instalación Windows completa y verificar su registro en la BD.
-2. Implementar la aplicación PHP de administración y consulta.
+2. Completar importaciones masivas, gráficos y exportaciones de la aplicación PHP.
 3. Definir cómo se asocia la identidad de Windows o la sesión web con la CI.
 4. Decidir más adelante el modo con administrador y ejecución anterior al login.
 5. Ampliar el contrato para sistemas de archivos y definir retención de capturas.
 
-## Centralización definitiva en SGLAB-copia
+## Ubicación del repositorio
 
-Los contenedores originales sglab-web-1 y sglab-db-1 se retiraron. Solo se usan
-sglab-copia-web-1 y sglab-copia-db-1, definidos en este compose.yaml. El bind mount
-de inicialización y el contexto de construcción PHP pertenecen a esta carpeta.
-El daemon tampoco usa el Compose de /home/facu/SGLAB.
+El proyecto está en `/home/facu/-TD2_SGLAB/SGLAB`, directamente en la raíz del
+repositorio. El proyecto Compose activo se llama `sglab`. La BD conserva el
+volumen externo `sglab_db_data`; las carpetas antiguas no se necesitan.
 
-El volumen externo `sglab_db_data` conserva su nombre histórico para reutilizar
-los datos sin copiarlos ni reinicializarlos; no depende de archivos en SGLAB.
-No eliminar ese volumen. Compose lo declara external para no borrarlo con down -v.
-Se creó un respaldo previo en database/backups. El volumen antiguo de pruebas
-sglab-copia_db_data queda sin conectar y no se usa como base activa.
+El cambio de carpeta requiere actualizar cliente.json en las PC ya configuradas:
+`directorio_remoto` debe ser `/home/facu/-TD2_SGLAB/SGLAB/var/incoming`.
+Los perfiles y valores predeterminados del cliente ya incluyen la ruta nueva.
+Los scripts usan rutas relativas a su ubicación, salvo las rutas del servicio y
+los perfiles específicos de este servidor. No mover .venv entre máquinas: recrearlo.
 
-En otro servidor es necesario crear/restaurar el volumen externo antes de ejecutar
-Compose. No levantar simultáneamente el proyecto antiguo contra el mismo volumen.
+## Web de administración
+
+Ver [WEB.md](docs/WEB.md) para crear el primer administrador, permisos,
+funcionalidades implementadas, sesiones y pruebas de integración.
+
+## Permisos actualizados
+
+La migración 003 agrega bajas lógicas, asignaciones docentes y comentarios de
+laboratorio. El asistente tiene administración del inventario y de cuentas de
+usuarios de todos los roles; administrador y asistente son el mismo actor. La PC del
+alumno se identifica por IP y captura reciente (ocho horas por defecto), sin
+asignación manual. El docente solo accede al laboratorio que tiene vigente.
+Detalles, limitaciones de red y pruebas: [WEB.md](docs/WEB.md).
+El MER se actualiza desde la BD activa con `python3 infra/generar-mer.py`.
+
+## Login por rol y Google Authenticator
+
+Administrador: cédula/contraseña y código TOTP; la primera vez configura el QR.
+Docente: acceso local directo. Asistente: mismo acceso con MFA que el administrador. Estudiante: Continuar con GitHub y email
+principal verificado coincidente. GitHub está preparado pero deshabilitado hasta
+registrar la OAuth App y configurar sus credenciales en .env.
+Guía, recuperación de MFA y respaldo de su clave: [AUTENTICACION.md](docs/AUTENTICACION.md).
+
+## Sistema de referencia del profesor
+
+El análisis de roles y diferencias de SGLAB-main.zip está en
+[REFERENCIA_PROFESOR.md](docs/REFERENCIA_PROFESOR.md). La revisión es estática:
+no se ejecutó ni reemplazó nuestra aplicación con el contenido del ZIP.
+
+## Nombre definitivo del administrador
+
+En el ejemplo del profesor, Administrador corresponde a nuestro ASISTENTE.
+Los perfiles son ASISTENTE (administración y MFA), DOCENTE y ALUMNO. Las cuentas
+antiguas ADMINISTRADOR siguen funcionando como alias de ASISTENTE y conservan
+sus credenciales; la web no ofrece ese alias como un perfil adicional.
+
+## Logs Docker y acciones de infraestructura
+
+Se conservan los scripts y el servicio del commit `0a015f7`. El registro de acciones
+está integrado en `infra/infra.sh`; la ruta anterior `server/bin/infra.sh` sigue
+funcionando. Ver [LOGS-DOCKER.md](docs/LOGS-DOCKER.md).

@@ -2,6 +2,6 @@
   "servidor": "192.168.50.83",
   "usuario": "facu",
   "puerto_ssh": 22,
-  "directorio_remoto": "/home/facu/SGLAB-copia/server/incoming",
+  "directorio_remoto": "/home/facu/-TD2_SGLAB/SGLAB/var/incoming",
   "laboratorio": "LAB01"
 }

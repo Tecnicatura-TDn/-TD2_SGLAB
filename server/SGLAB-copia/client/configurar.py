@@ -44,11 +44,16 @@ def ejecutar(*comando):
 def proteger(carpeta, windows, permitir_usuario=False):
     if windows:
         # SIDs independientes del idioma de Windows: SYSTEM y Administradores.
-        ejecutar('icacls', carpeta, '/inheritance:r', '/grant:r',
-                 '*S-1-5-18:(OI)(CI)F', '*S-1-5-32-544:(OI)(CI)F')
+        permisos = ['*S-1-5-18:(OI)(CI)F', '*S-1-5-32-544:(OI)(CI)F']
         if permitir_usuario:
-            usuario = subprocess.check_output(['whoami'], text=True).strip()
-            ejecutar('icacls', carpeta, '/grant:r', usuario + ':(OI)(CI)F')
+            identidad = subprocess.check_output(['whoami', '/user', '/fo', 'csv', '/nh'],
+                                               text=True, encoding='utf-8', errors='replace')
+            sid = re.search(r'\bS-1-\d+(?:-\d+)+\b', identidad)
+            if not sid:
+                raise ValueError('No se pudo determinar el SID del usuario de Windows')
+            permisos.append('*' + sid.group() + ':(OI)(CI)F')
+        # Aplicar todos los permisos juntos, sin quitar primero el acceso del usuario.
+        ejecutar('icacls', carpeta, '/inheritance:r', '/grant:r', *permisos)
     else:
         carpeta.chmod(0o700)
 
@@ -108,6 +113,43 @@ def escribir_json(ruta, datos):
             temporal.unlink(missing_ok=True)
 
 
+def revisar_destino(destino, reanudar):
+    """Reanudar solo instalaciones reconocibles; nunca reemplazar claves existentes."""
+    if destino.is_symlink():
+        raise ValueError('La carpeta de instalación no puede ser un enlace simbólico')
+    if not destino.exists() or not any(destino.iterdir()):
+        return {}
+    if not reanudar:
+        raise ValueError(f'{destino} no está vacío. Usar --reanudar para completar la instalación conservando su configuración y claves')
+    for nombre in ('cliente.json', 'id_ed25519', 'id_ed25519.pub', 'known_hosts', 'client', 'pendientes',
+                   'client/recopilar.py', 'client/ventana.py', 'client/windows', 'client/windows/instalar-tareas.ps1'):
+        if (destino/nombre).is_symlink():
+            raise ValueError(f'No se puede reanudar: {nombre} es un enlace simbólico')
+    config = destino/'cliente.json'
+    if config.is_file():
+        datos = json.loads(config.read_text(encoding='utf-8'))
+        if not isinstance(datos, dict):
+            raise ValueError('cliente.json no contiene una configuración válida')
+        validar(datos)
+        # La instalación generada siempre utiliza estas rutas locales.
+        for campo, ruta in (('clave', destino/'id_ed25519'), ('known_hosts', destino/'known_hosts'),
+                             ('salida', destino/'pendientes')):
+            if not isinstance(datos.get(campo), str) or Path(datos[campo]).resolve() != ruta:
+                raise ValueError(f'No se puede reanudar automáticamente: la ruta {campo} fue personalizada. Revisar cliente.json')
+        return datos
+    # Recuperar también el fallo SSH del instalador anterior, que aún no escribía JSON.
+    nombres = {p.name for p in destino.iterdir()}
+    reconocidos = {'id_ed25519', 'id_ed25519.pub', 'known_hosts', 'client'}
+    if not (destino/'id_ed25519').is_file() or not nombres <= reconocidos:
+        raise ValueError(f'{destino} contiene archivos que no corresponden a una instalación incompleta reconocida. Se conservaron sin cambios')
+    cliente = destino/'client'
+    if cliente.exists() and (not cliente.is_dir() or any(
+            p.name not in {'recopilar.py', 'ventana.py'} or not p.is_file() or p.is_symlink()
+            for p in cliente.iterdir())):
+        raise ValueError('La carpeta client contiene archivos no reconocidos. Se conservaron sin cambios')
+    return {}
+
+
 def literal_systemd(valor):
     return '"' + str(valor).replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%') + '"'
 
@@ -154,6 +196,7 @@ def main():
     parser.add_argument('--autorizar-clave', action='store_true', help='Autorizar la clave existente usando contraseña SSH')
     parser.add_argument('--known-hosts', type=Path, help='Archivo de hosts verificados previamente')
     parser.add_argument('--destino', type=Path, help='Carpeta de configuración/instalación')
+    parser.add_argument('--reanudar', action='store_true', help='Completar una instalación anterior sin cambiar sus datos ni reemplazar claves')
     parser.add_argument('--por-usuario', action='store_true', help='Windows: instalar sin administrador y ejecutar al iniciar sesion')
     parser.add_argument('--instalar', action='store_true', help='Registrar además arranque y reintentos (requiere administrador)')
     args = parser.parse_args()
@@ -165,6 +208,16 @@ def main():
             raise ValueError('--por-usuario requiere Windows y --instalar')
         if args.instalar and not args.por_usuario and not (ctypes.windll.shell32.IsUserAnAdmin() if windows else os.geteuid() == 0):
             raise ValueError('Para --instalar abrir PowerShell como administrador o ejecutar con sudo en Linux')
+        defecto = (Path(os.environ.get('ProgramData', 'C:/ProgramData'))/'SGLAB' if windows else Path('/opt/sglab-cliente'))
+        if windows and args.por_usuario:
+            defecto = Path(os.environ['LOCALAPPDATA'])/'SGLAB'
+        ruta_destino = args.destino or (defecto if args.instalar else Path.cwd()/'sglab-cliente')
+        if ruta_destino.is_symlink():
+            raise ValueError('La carpeta de instalación no puede ser un enlace simbólico')
+        destino = ruta_destino.resolve()
+        if any(c in str(destino) for c in ('"', '\n', '\r')):
+            raise ValueError('Ruta de instalación inválida')
+        anterior = revisar_destino(destino, args.reanudar)
         perfil = json.loads(args.perfil.read_text(encoding='utf-8')) if args.perfil else {}
         if not isinstance(perfil, dict) or set(perfil) - {'servidor', 'usuario', 'puerto_ssh', 'directorio_remoto', 'laboratorio'}:
             raise ValueError('Perfil inválido: solo admite servidor, usuario, puerto_ssh, directorio_remoto y laboratorio')
@@ -173,13 +226,17 @@ def main():
             ('servidor', 'IP o nombre del servidor', None),
             ('usuario', 'Usuario SSH receptor', None),
             ('puerto_ssh', 'Puerto SSH', 22),
-            ('directorio_remoto', 'Carpeta de recepción', '/home/facu/SGLAB-copia/server/incoming'),
+            # Ruta del servidor; se puede cambiar con --directorio-remoto o --perfil.
+            ('directorio_remoto', 'Carpeta de recepción', '/srv/sglab/incoming'),
             ('laboratorio', 'Etiqueta del laboratorio', 'LAB01'),
         ):
             valor = getattr(args, campo)
-            valores[campo] = solicitar(valor if valor is not None else perfil.get(campo), etiqueta, defecto)
+            elegido = valor if valor is not None else perfil.get(campo, anterior.get(campo))
+            valores[campo] = solicitar(elegido, etiqueta, defecto)
         valores['puerto_ssh'] = int(valores['puerto_ssh'])
         validar(valores)
+        if anterior and any(valores[campo] != anterior[campo] for campo in valores):
+            raise ValueError('Reanudar conserva los datos existentes. Para cambiar el servidor, editar cliente.json primero')
         autorizar = args.autorizar_clave or args.clave is None
         clave = args.clave.expanduser().resolve() if args.clave else None
         hosts = args.known_hosts.expanduser().resolve() if args.known_hosts else None
@@ -199,33 +256,45 @@ def main():
                 # SYSTEM no puede usar el alias Python de Microsoft Store del usuario.
                 if 'windowsapps' in str(Path(sys.executable).resolve()).lower():
                     raise ValueError('Usar Python instalado para todo el sistema, fuera de WindowsApps')
-        defecto = (Path(os.environ.get('ProgramData', 'C:/ProgramData'))/'SGLAB' if windows else Path('/opt/sglab-cliente'))
-        if windows and args.por_usuario:
-            defecto = Path(os.environ['LOCALAPPDATA'])/'SGLAB'
-        destino = (args.destino or (defecto if args.instalar else Path.cwd()/'sglab-cliente')).resolve()
-        if any(c in str(destino) for c in ('"', '\n', '\r')):
-            raise ValueError('Ruta de instalación inválida')
-        # Nunca reemplazar silenciosamente una instalación ni credenciales existentes.
-        if destino.exists() and any(destino.iterdir()):
-            raise ValueError(f'{destino} no está vacío. Editar cliente.json para cambiar el servidor; elegir otro destino para una instalación nueva')
         if clave == destino / 'id_ed25519' or hosts == destino / 'known_hosts':
             raise ValueError('Las credenciales de origen deben estar fuera del destino nuevo')
         destino.mkdir(parents=True, exist_ok=True)
         proteger(destino, windows, permitir_usuario=not args.instalar or args.por_usuario)
-        if clave:
+        clave_local = destino/'id_ed25519'
+        if clave_local.exists():
+            if not args.reanudar or not clave_local.is_file() or clave is not None:
+                raise ValueError('La clave local ya existe. Reanudar sin --clave para conservarla')
+            print('Reutilizando la clave SSH existente de esta instalación.', flush=True)
+        elif clave:
             shutil.copyfile(clave, destino/'id_ed25519')
         else:
             ejecutar('ssh-keygen', '-q', '-t', 'ed25519', '-N', '',
                      '-C', 'SGLAB-' + platform.node(), '-f', destino/'id_ed25519')
-        if hosts:
+        if (destino/'known_hosts').exists():
+            if not (destino/'known_hosts').is_file():
+                raise ValueError('known_hosts no es un archivo regular')
+        elif hosts:
             shutil.copyfile(hosts, destino/'known_hosts')
         else:
             (destino/'known_hosts').touch(mode=0o600)
-        if autorizar:
-            autorizar_clave(valores, destino/'id_ed25519', destino/'known_hosts')
         if not windows:
             (destino/'id_ed25519').chmod(0o600)
             (destino/'known_hosts').chmod(0o600)
+        # Preparar la captura local antes de depender de la conexión al servidor.
+        script = destino/'client'/'recopilar.py'
+        script.parent.mkdir(exist_ok=True)
+        shutil.copyfile(ORIGEN/'recopilar.py', script)
+        shutil.copyfile(ORIGEN/'ventana.py', script.parent/'ventana.py')
+        config = destino/'cliente.json'
+        if not anterior:
+            datos = dict(valores, ci=0, salida=str(destino/'pendientes'), clave=str(destino/'id_ed25519'),
+                         known_hosts=str(destino/'known_hosts'), reintentos=3, espera=10)
+            escribir_json(config, datos)
+        print(f'Configuración local guardada: {config}', flush=True)
+        if autorizar or args.instalar:
+            print('Comprobando la autorización SSH.' + (' Las tareas automáticas se instalarán después de validarla.' if args.instalar else ''), flush=True)
+        if autorizar:
+            autorizar_clave(valores, destino/'id_ed25519', destino/'known_hosts')
         if args.instalar:
             if windows and not args.por_usuario:
                 ejecutar('icacls', destino/'id_ed25519', '/setowner', '*S-1-5-18')
@@ -240,19 +309,10 @@ def main():
                                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=15)
             if prueba.returncode:
                 raise ValueError('known_hosts no contiene la identidad verificada del servidor y puerto configurados')
-        script = destino/'client'/'recopilar.py'
-        script.parent.mkdir()
-        shutil.copyfile(ORIGEN/'recopilar.py', script)
-        shutil.copyfile(ORIGEN/'ventana.py', script.parent/'ventana.py')
-        valores.update(ci=0, salida=str(destino/'pendientes'), clave=str(destino/'id_ed25519'),
-                       known_hosts=str(destino/'known_hosts'), reintentos=3, espera=10)
-        config = destino/'cliente.json'
-        escribir_json(config, valores)
-        print(f'Configuración guardada: {config}')
         if args.instalar:
             if windows:
                 ps = script.parent/'windows'/'instalar-tareas.ps1'
-                ps.parent.mkdir()
+                ps.parent.mkdir(exist_ok=True)
                 shutil.copyfile(ORIGEN/'windows'/'instalar-tareas.ps1', ps)
                 comando = ['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'RemoteSigned', '-File', ps, '-Python', sys.executable, '-Config', config]
                 if args.por_usuario:
@@ -271,8 +331,11 @@ def main():
             print('Configuración preparada; no se registraron tareas de arranque.')
         print('Para cambiar la dirección del servidor, editar cliente.json; no editar recopilar.py.')
         return 0
-    except (OSError, ValueError, TypeError, EOFError, subprocess.SubprocessError) as exc:
+    except (OSError, ValueError, KeyError, TypeError, EOFError, subprocess.SubprocessError) as exc:
         print(f'No se completó la configuración: {exc}', file=sys.stderr)
+        if 'destino' in locals() and (destino/'cliente.json').is_file():
+            print(f'Se conserva la configuración local en {destino / "cliente.json"}. '
+                  'La instalación automática puede estar incompleta; corregir el error y volver a ejecutar el instalador con --reanudar.', file=sys.stderr)
         return 1
 
 

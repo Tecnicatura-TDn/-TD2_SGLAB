@@ -10,19 +10,28 @@ CREATE TABLE usuarios (
     apellido VARCHAR(100) NOT NULL,
     correo VARCHAR(254) NULL,
     password_hash VARCHAR(255) NOT NULL,
+    totp_secret TEXT NULL,
+    totp_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    totp_last_step BIGINT NULL,
+    github_id BIGINT UNSIGNED NULL,
+    auth_version INT UNSIGNED NOT NULL DEFAULT 0,
     tipo_usuario ENUM('ALUMNO', 'DOCENTE', 'ASISTENTE', 'ADMINISTRADOR') NOT NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (ci),
+    UNIQUE KEY uq_usuarios_github_id (github_id),
     UNIQUE KEY uq_usuarios_correo (correo)
 ) ENGINE=InnoDB;
 
 CREATE TABLE laboratorio (
     id_laboratorio INT UNSIGNED NOT NULL AUTO_INCREMENT,
     nombre VARCHAR(100) NOT NULL,
+    activo TINYINT(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (id_laboratorio)
 ) ENGINE=InnoDB;
 
 CREATE TABLE equipo (
     id_equipo INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    activo TINYINT(1) NOT NULL DEFAULT 1,
     num_serie VARCHAR(100) NULL,
     smbios_uuid CHAR(36) NULL,
     estado_administrativo ENUM('OPERATIVA', 'EN_REPARACION', 'FUERA_DE_SERVICIO')
@@ -69,6 +78,8 @@ CREATE TABLE registro (
         REFERENCES laboratorio (id_laboratorio)
         ON DELETE RESTRICT ON UPDATE RESTRICT,
     KEY idx_registro_equipo_fecha (id_equipo, fecha),
+    KEY idx_registro_fecha (fecha, id_registro),
+    KEY idx_registro_equipo_recepcion (id_equipo, fecha_recepcion, id_registro),
     CONSTRAINT fk_registro_equipo FOREIGN KEY (id_equipo)
         REFERENCES equipo (id_equipo)
         ON DELETE RESTRICT ON UPDATE RESTRICT,
@@ -130,4 +141,45 @@ CREATE TABLE registro_sistema_archivos (
     CONSTRAINT fk_fs_disco FOREIGN KEY (id_registro, orden_disco)
         REFERENCES registro_disco (id_registro, orden)
         ON DELETE RESTRICT ON UPDATE RESTRICT
+) ENGINE=InnoDB;
+
+-- Una asignación actual por docente; hasta NULL significa sin fin programado.
+CREATE TABLE IF NOT EXISTS asignacion_docente (
+    usuario_ci INT UNSIGNED NOT NULL,
+    id_laboratorio INT UNSIGNED NOT NULL,
+    desde DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    hasta DATETIME NULL,
+    asignado_por_ci INT UNSIGNED NOT NULL,
+    PRIMARY KEY (usuario_ci),
+    KEY idx_asignacion_docente_laboratorio (id_laboratorio),
+    CONSTRAINT ck_asignacion_docente_fechas CHECK (hasta IS NULL OR hasta >= desde),
+    CONSTRAINT fk_asignacion_docente_usuario FOREIGN KEY (usuario_ci) REFERENCES usuarios(ci),
+    CONSTRAINT fk_asignacion_docente_laboratorio FOREIGN KEY (id_laboratorio) REFERENCES laboratorio(id_laboratorio),
+    CONSTRAINT fk_asignacion_docente_autor FOREIGN KEY (asignado_por_ci) REFERENCES usuarios(ci)
+) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS comentario_laboratorio (
+    id_comentario BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    id_laboratorio INT UNSIGNED NOT NULL,
+    autor_ci INT UNSIGNED NOT NULL,
+    contenido TEXT NOT NULL,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_comentario),
+    KEY idx_comentario_lab_fecha (id_laboratorio,fecha_hora),
+    CONSTRAINT fk_comentario_lab_laboratorio FOREIGN KEY (id_laboratorio) REFERENCES laboratorio(id_laboratorio),
+    CONSTRAINT fk_comentario_lab_autor FOREIGN KEY (autor_ci) REFERENCES usuarios(ci)
+) ENGINE=InnoDB;
+
+-- Reportes manuales, separados del diagnóstico y del estado administrativo.
+USE sglab;
+CREATE TABLE IF NOT EXISTS reporte_funcionamiento (
+    id_reporte BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    id_equipo INT UNSIGNED NOT NULL,
+    autor_ci INT UNSIGNED NOT NULL,
+    estado ENUM('FUNCIONA', 'NO_FUNCIONA') NOT NULL,
+    descripcion TEXT NOT NULL,
+    fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_reporte),
+    KEY idx_reporte_equipo_fecha (id_equipo, fecha_hora, id_reporte),
+    CONSTRAINT fk_reporte_equipo FOREIGN KEY (id_equipo) REFERENCES equipo(id_equipo),
+    CONSTRAINT fk_reporte_autor FOREIGN KEY (autor_ci) REFERENCES usuarios(ci)
 ) ENGINE=InnoDB;

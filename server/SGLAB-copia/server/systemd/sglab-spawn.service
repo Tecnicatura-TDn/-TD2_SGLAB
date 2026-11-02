@@ -1,17 +1,22 @@
+# Ejemplo genérico: proyecto en /srv/sglab y usuario de servicio sglab.
+# Para usar el usuario y las rutas reales de esta máquina, generar la unidad con
+# python3 infra/configurar-spawn.py desde la raíz del proyecto e instalar
+# var/systemd/sglab-spawn.service siguiendo las instrucciones del generador.
 [Unit]
-Description=SGLAB copia - Ingesta de reportes TOML
+Description=SGLAB - Ingesta de reportes TOML
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=facu
-SupplementaryGroups=docker sglab-ingest
-WorkingDirectory=/home/facu/SGLAB-copia
-Environment=SGLAB_DATA_DIR=/home/facu/SGLAB-copia/server
-Environment=SGLAB_TOMLQ=/home/facu/SGLAB-copia/.venv/bin/tomlq
-ExecStart=/usr/bin/bash /home/facu/SGLAB-copia/server/bin/spawn.sh
+User=sglab
+SupplementaryGroups=docker
+WorkingDirectory=/srv/sglab
+Environment="SGLAB_DATA_DIR=/srv/sglab/var"
+Environment="SGLAB_COMPOSE_DIR=/srv/sglab"
+Environment="SGLAB_TOMLQ=/srv/sglab/.venv/bin/tomlq"
+ExecStart="/usr/bin/bash" "/srv/sglab/server/bin/spawn.sh"
 Restart=on-failure
 RestartSec=5
 UMask=0077

@@ -9,7 +9,9 @@ if not exist "%SGLAB_PYTHON%" (
     exit /b 1
 )
 if not exist "%SGLAB_DIR%\cliente.json" (
-    echo No se encontro la configuracion. Ejecuta primero Instalar-SGLAB.bat.
+    echo No se encontro la configuracion en "%SGLAB_DIR%\cliente.json".
+    echo Ejecuta Instalar-SGLAB.bat para instalar o reanudar la configuracion.
+    echo Si falla, revisa "%LOCALAPPDATA%\SGLAB-instalacion.log".
     pause
     exit /b 1
 )

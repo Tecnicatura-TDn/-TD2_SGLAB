@@ -1,0 +1,3 @@
+hostname,num_serie,smbios_uuid,estado_administrativo
+LAB-PC01,SERIE-REAL-PC01,,OPERATIVA
+LAB-PC02,,12345678-1234-1234-1234-123456789abc,EN_REPARACION

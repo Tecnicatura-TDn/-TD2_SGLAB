@@ -29,10 +29,7 @@ try {
     $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + `
         [Environment]::GetEnvironmentVariable('Path', 'User')
     Write-Host "Python listo: $Python"
-    Write-Host 'Ahora podes configurar el cliente con:'
-    $Configurar = Join-Path $PSScriptRoot '..\configurar.py'
-    $Perfil = Join-Path $PSScriptRoot '..\perfiles\pruebas.json'
-    Write-Host ('& "{0}" "{1}" --perfil "{2}" --instalar --por-usuario' -f $Python, $Configurar, $Perfil)
+    Write-Host 'Instalar-SGLAB.bat continua con los datos del servidor de esta PC.'
 } catch {
     Write-Error $_
     exit 1
