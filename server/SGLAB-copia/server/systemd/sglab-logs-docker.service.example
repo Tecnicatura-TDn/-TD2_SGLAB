@@ -1,0 +1,17 @@
+[Unit]
+Description=SGLAB - Captura de logs de Docker
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=USUARIO
+SupplementaryGroups=docker
+WorkingDirectory=RUTA_PROYECTO
+ExecStart=RUTA_PROYECTO/server/bin/logsparadocker.sh
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

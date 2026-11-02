@@ -66,6 +66,20 @@ error() {
     printf '[ERROR] %s\n' "$*" >&2
 }
 
+registrar_evento() {
+    local nivel="$1"
+    shift
+
+    local fecha
+    local archivo
+
+    fecha="$(date '+%Y-%m-%d %H:%M:%S')"
+    archivo="$DIR_LOGS/sglab-acciones-$(date '+%Y-%m-%d').log"
+
+    mkdir -p -- "$DIR_LOGS" || return 1
+
+    printf '[%s] %s - %s\n' "$fecha" "$nivel" "$*" >> "$archivo"
+}
 
 # -----------------------------------------------------------------------------
 # Verificar requisitos antes de usar Docker
@@ -607,28 +621,60 @@ menu() {
         # Cada acción ocurre solamente si el usuario elige una opción.
         case "$opcion" in
             1)
-                info "Levantando toda la infraestructura..."
-                compose up -d || error "No se pudieron levantar los servicios."
-                ;;
+    		if compose up -d; then
+       			info "Infraestructura iniciada correctamente."
+       			registrar_evento "INFO" "Se inició toda la infraestructura."
+   		else
+      			error "No se pudieron levantar los servicios."
+       			registrar_evento "ERROR" "Falló el inicio de toda la infraestructura."
+    		fi
+    		;;
             2)
-                info "Levantando únicamente web..."
-                compose up -d --no-deps web || error "No se pudo levantar web."
-                ;;
+    		info "Levantando únicamente web..."
+    		if compose up -d --no-deps web; then
+        		registrar_evento "INFO" "Se inició el servicio web."
+    		else
+        		error "No se pudo levantar web."
+        		registrar_evento "ERROR" "Falló el inicio del servicio web."
+    		fi
+   		;;
             3)
-                info "Levantando MariaDB..."
-                compose up -d --no-deps db || error "No se pudo levantar db."
-                ;;
+   		info "Levantando MariaDB..."
+    		if compose up -d --no-deps db; then
+        		registrar_evento "INFO" "Se inició el servicio MariaDB."
+    		else
+       			error "No se pudo levantar db."
+        		registrar_evento "ERROR" "Falló el inicio del servicio MariaDB."
+    		fi
+    		;;
             4)
-                compose stop web || error "No se pudo detener web."
-                ;;
+    		if compose stop web; then
+        		info "Servicio web detenido correctamente."
+        		registrar_evento "INFO" "Se detuvo el servicio web."
+    		else
+        		error "No se pudo detener web."
+        		registrar_evento "ERROR" "Falló la detención del servicio web."
+    		fi
+    		;;
             5)
-                aviso "La web puede perder conexión mientras la DB esté detenida."
-                compose stop db || error "No se pudo detener db."
-                ;;
+    		aviso "La web puede perder conexión mientras la DB esté detenida."
+    		if compose stop db; then
+        		info "MariaDB detenido correctamente."
+        		registrar_evento "INFO" "Se detuvo el servicio MariaDB."
+    		else
+        		error "No se pudo detener db."
+        		registrar_evento "ERROR" "Falló la detención del servicio MariaDB."
+    		fi
+    		;;
             6)
-                info "Deteniendo ambos servicios (sin borrar los datos)..."
-                compose stop || error "No se pudieron detener los servicios."
-                ;;
+    		info "Deteniendo ambos servicios (sin borrar los datos)..."
+    		if compose stop; then
+       			registrar_evento "INFO" "Se detuvo toda la infraestructura."
+    		else
+        		error "No se pudieron detener los servicios."
+        		registrar_evento "ERROR" "Falló la detención de toda la infraestructura."
+    		fi
+    		;;
             7)
                 compose ps --all || error "No se pudo consultar el estado."
                 ;;
@@ -636,14 +682,29 @@ menu() {
                 ver_logs || error "No se pudieron mostrar los logs."
                 ;;
             9)
-                exportar_logs || error "No se pudieron exportar los logs."
-                ;;
+    		if exportar_logs; then
+        		registrar_evento "INFO" "Se ejecutó la exportación de logs."
+    		else
+        		error "No se pudieron exportar los logs."
+        		registrar_evento "ERROR" "Falló la exportación de logs."
+    		fi
+    		;;
             10)
-                reinicializar_bd || error "No se completó la reinicialización."
-                ;;
+    		if reinicializar_bd; then
+        		registrar_evento "INFO" "Se reinicializó la base de datos con respaldo."
+    		else
+        		error "No se completó la reinicialización."
+        		registrar_evento "ERROR" "Falló la reinicialización de la base de datos."
+    		fi
+    		;;
             11)
-                eliminar_contenedores || error "No se completó la eliminación."
-                ;;
+    		if eliminar_contenedores; then
+        		registrar_evento "WARNING" "Se eliminaron los contenedores y datos de SGLAB."
+    		else
+        		error "No se completó la eliminación."
+        		registrar_evento "ERROR" "Falló la eliminación de contenedores y datos de SGLAB."
+    		fi
+    		;;
             0)
                 info "Saliendo de infra.sh."
                 return 0
