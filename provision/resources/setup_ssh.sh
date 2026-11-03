@@ -26,7 +26,7 @@
         # 1. Verificar si ya existe una llave SSH para GitHub; si no, crearla de forma desatendida
         if [ ! -f "$ssh_key_path" ]; then
             log "Generando nueva clave SSH Ed25519 para GitHub..."
-            ssh-keygen -t ed25519 -C "$email_github" -f "$ssh_key_path" -N "" > /dev/null 2>&1
+            ssh-keygen -t rsa -b 4096 -C "$email_github" -f "$ssh_key_path" -N "" > /dev/null 2>&1
             log "Llave SSH generada con éxito."
         else
             info "Ya existe una llave SSH en $ssh_key_path. Omitiendo generación."
