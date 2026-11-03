@@ -154,6 +154,19 @@ main() {
     # Agregamos el usuario base del sistema 
     alta_usuario
     # Operamos con la memoria del proyecto
+
+     mensaje "¿Deseas configurar la clave ssh para conectar con el repositorio de github? [si/no]: "
+     read config_github
+ 
+     case $config_github in
+         [Ss][Ii])
+         setup_github_ssh
+         ;;
+         [Nn][Oo]|*)
+         log "Salteando configuración de clave ssh para github"
+         ;;
+     esac
+     
     operar_memoria
     if [ "$memoria" != "0" ] && [ "$memoria" != "3" ]; then
         mensaje "¿Deseas instalar otro entorno? [ENTER/NO]"
