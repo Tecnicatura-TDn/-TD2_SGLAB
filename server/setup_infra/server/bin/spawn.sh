@@ -5,7 +5,7 @@ umask 077
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd -P)"
 DATA_DIR="${SGLAB_DATA_DIR:-$PROJECT_ROOT/var}"
-COMPOSE_DIR="${SGLAB_COMPOSE_DIR:-$PROJECT_ROOT}"
+DB_CONFIG="${SGLAB_DB_CONFIG:-/etc/sglab/ingest.cnf}"
 TOMLQ_BIN="${SGLAB_TOMLQ:-tomlq}"
 INTERVALO="${SGLAB_INTERVALO:-5}"
 
@@ -19,9 +19,10 @@ if [[ $# -gt 1 || ( $# -eq 1 && "$1" != --once ) ]]; then
     exit 2
 fi
 [[ "$INTERVALO" =~ ^[1-9][0-9]*$ ]] || { echo 'Intervalo inválido' >&2; exit 2; }
-for comando in "$TOMLQ_BIN" jq docker flock find mktemp sha256sum date timeout tr; do
+for comando in "$TOMLQ_BIN" jq mariadb flock find mktemp sha256sum date timeout tr; do
     command -v "$comando" >/dev/null || { echo "Falta $comando" >&2; exit 2; }
 done
+[[ -r "$DB_CONFIG" ]] || { echo "Falta configuración de ingesta: $DB_CONFIG" >&2; exit 2; }
 mkdir -p -- "$DATA_DIR"/{incoming,processing,processed,rejected}
 DATA_DIR="$(cd -- "$DATA_DIR" && pwd -P)"
 # Impide que dos instancias procesen simultáneamente la misma cola.
@@ -143,19 +144,14 @@ DELIMITER ;"
 JQ_SQL
     jq -r --arg digest "$digest" --arg fecha "$fecha" -f "$temporal/generador.jq" \
         "$temporal/datos.json" > "$temporal/consulta.sql" || return 1
-    if timeout 90 docker compose --project-directory "$COMPOSE_DIR" \
-        --env-file "$COMPOSE_DIR/.env" -f "$COMPOSE_DIR/compose.yaml" \
-        exec -T db sh -c '
-            export MYSQL_PWD="$DB_INGEST_PASSWORD"
-            exec mariadb --protocol=tcp -h127.0.0.1 -u"$DB_INGEST_USER" \
-                --batch --skip-column-names --default-character-set=utf8mb4 sglab
-        ' < "$temporal/consulta.sql" > "$temporal/salida.log" 2> "$temporal/error.log"; then
+    if timeout 90 mariadb --defaults-file="$DB_CONFIG" \
+        --batch --skip-column-names --default-character-set=utf8mb4 < "$temporal/consulta.sql" > "$temporal/salida.log" 2> "$temporal/error.log"; then
         :
     else
         estado="$?"
         echo "Falló la ingesta (salida $estado)."
         if [[ -s "$temporal/error.log" ]]; then
-            echo 'Detalle técnico de MariaDB/Docker:'
+            echo 'Detalle técnico de MariaDB:'
             # El log queda solamente dentro del trabajo rechazado. Se limita a las
             # últimas líneas y oculta asignaciones de secretos por precaución.
             tail -n 20 -- "$temporal/error.log" | \

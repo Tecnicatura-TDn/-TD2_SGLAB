@@ -9,9 +9,11 @@ preparar_receptor() {
         sudo useradd -m -s /bin/bash "$receptor" || return 1
     fi
     sudo usermod -aG sglab-ingest "$receptor" || return 1
-    # El mismo usuario recibe las capturas y ejecuta spawn.
+    # El receptor ejecuta spawn sin acceso al socket privilegiado de Docker.
     if getent group docker >/dev/null 2>&1; then
-        sudo usermod -aG docker "$receptor" || return 1
+        if id -nG "$receptor" | tr ' ' '\n' | grep -qx docker; then
+            sudo gpasswd -d "$receptor" docker || return 1
+        fi
     fi
     home_receptor="$(getent passwd "$receptor" | cut -d: -f6)"
     if [ -z "$home_receptor" ] || [ "$home_receptor" = / ] ||
@@ -36,61 +38,70 @@ preparar_receptor() {
 }
 
 permisos_cola() {
-    # BASE-TD2 es dueño del proyecto y de todas las carpetas de la cola.
-    if [ -L "$proyecto/var" ]; then
-        warn "var no puede ser un enlace simbólico"
+    # El administrador conserva el proyecto; el receptor solo atraviesa sus padres.
+    if [ "$(stat -c %U "$proyecto")" = "$receptor" ]; then
+        warn "El proyecto pertenece al receptor. Transferí su propiedad al administrador antes de continuar"
         return 1
     fi
+    ruta="$proyecto"
+    while [ "$ruta" != / ]; do
+        sudo setfacl -m "u:$receptor:--x" "$ruta" || return 1
+        ruta="$(dirname "$ruta")"
+    done
+    for ruta in "$proyecto/server" "$proyecto/server/bin"; do
+        sudo setfacl -m "u:$receptor:--x" "$ruta" || return 1
+    done
+    sudo setfacl -m "u:$receptor:r--" "$proyecto/server/bin/spawn.sh" || return 1
+    sudo setfacl -R -m "u:$receptor:r-X" "$proyecto/.venv" || return 1
+    if sudo -u "$receptor" -- test -w "$proyecto/server/bin/spawn.sh" ||
+       sudo -u "$receptor" -- test -w "$proyecto/.venv"; then
+        warn "El script y .venv deben pertenecer al administrador y no ser modificables por el receptor"
+        return 1
+    fi
+    [ ! -L "$proyecto/var" ] || return 1
     sudo install -d -m 0700 -o "$operador" -g "$grupo_operador" "$proyecto/var" || return 1
+    sudo setfacl -m "u:$receptor:--x" "$proyecto/var" || return 1
     for carpeta in incoming processing processed rejected; do
-        if [ -L "$proyecto/var/$carpeta" ]; then
-            warn "La carpeta $carpeta no puede ser un enlace simbólico"
+        [ ! -L "$proyecto/var/$carpeta" ] || return 1
+        sudo install -d -m 0700 -o "$receptor" -g sglab-ingest "$proyecto/var/$carpeta" || return 1
+    done
+    [ ! -L "$proyecto/var/.spawn.lock" ] || return 1
+    sudo touch "$proyecto/var/.spawn.lock" || return 1
+    sudo chown "$receptor:sglab-ingest" "$proyecto/var/.spawn.lock" || return 1
+    sudo chmod 0600 "$proyecto/var/.spawn.lock" || return 1
+    if [ -e "$proyecto/.env" ]; then
+        [ ! -L "$proyecto/.env" ] || return 1
+        sudo setfacl -b "$proyecto/.env" || return 1
+        sudo chmod 0600 "$proyecto/.env" || return 1
+        if sudo -u "$receptor" -- test -r "$proyecto/.env"; then
+            warn "El receptor no debe poder leer .env. Revisá su propiedad"
             return 1
         fi
-    done
-    sudo install -d -m 2770 -o "$operador" -g sglab-ingest "$proyecto/var/incoming" || return 1
-    for carpeta in processing processed rejected; do
-        sudo install -d -m 0700 -o "$operador" -g "$grupo_operador" "$proyecto/var/$carpeta" || return 1
-    done
+    fi
     sudo -u "$receptor" -- test -w "$proyecto/var/incoming" || return 1
-    if [ -L "$proyecto/.env" ]; then
-        warn ".env no puede ser un enlace simbólico"
-        return 1
-    fi
-    sudo chmod 0600 "$proyecto/.env" || return 1
-    sudo -u "$operador" -- test -r "$proyecto/.env" || return 1
-    log "Permisos de la cola preparados"
-}
-
-verificar_bd_sglab() {
-    if ! sudo docker compose --project-directory "$proyecto" --env-file "$proyecto/.env" -f "$proyecto/compose.yaml" exec -T db healthcheck.sh --connect --innodb_initialized >/dev/null; then
-        warn "MariaDB no está lista. Levantá la infraestructura con infra.sh antes de activar spawn"
-        return 1
-    fi
-    if ! sudo docker compose --project-directory "$proyecto" --env-file "$proyecto/.env" -f "$proyecto/compose.yaml" exec -T db sh -c '
-        export MYSQL_PWD="$DB_INGEST_PASSWORD"
-        exec mariadb --protocol=tcp -h127.0.0.1 -u"$DB_INGEST_USER" --batch --skip-column-names -e "SELECT id_equipo FROM sglab.equipo LIMIT 0"
-    ' >/dev/null 2>&1; then
-        warn "La cuenta técnica de ingesta no puede acceder a MariaDB. Revisá .env y las cuentas de la base"
-        return 1
-    fi
+    log "Permisos separados entre administrador y receptor"
 }
 
 configurar_sglab() {
     info "Configurando el receptor SSH y spawn de SGLAB"
     proyecto_defecto="${proyecto_clonado:-$(cd "$DIR_ACTUAL/../.." && pwd)}" || return 1
+    info "Indicá la carpeta que contiene compose.yaml, no /home ni el home del usuario"
     printf 'Carpeta del proyecto SGLAB [%s]: ' "$proyecto_defecto"
     read -r proyecto || return 1
     proyecto="${proyecto:-$proyecto_defecto}"
     proyecto="$(cd "$proyecto" && pwd -P)" || return 1
-    for archivo in compose.yaml .env server/bin/spawn.sh infra/configurar-spawn.py server/ingest/requirements-bash.txt; do
+    for archivo in compose.yaml server/bin/spawn.sh infra/configurar-spawn.py server/ingest/requirements-bash.txt; do
         if [ ! -f "$proyecto/$archivo" ]; then
-            warn "Falta $archivo. Prepará primero el proyecto y su .env con infra.sh"
+            warn "Falta $archivo en $proyecto. Elegí la raíz del proyecto que contiene compose.yaml (por ejemplo $proyecto_defecto)"
             return 1
         fi
     done
-    operador=BASE-TD2
-    for comando in docker python3 jq ssh-keygen; do
+    operador="${SUDO_USER:-$(stat -c %U "$proyecto")}"
+    if [ "$operador" = root ] || [ "$operador" = BASE-TD2 ] || [ "$(stat -c %U "$proyecto")" != "$operador" ]; then
+        warn "Ejecutá con sudo desde el administrador dueño del proyecto, distinto de BASE-TD2"
+        return 1
+    fi
+    for comando in docker python3 jq ssh-keygen setfacl mariadb; do
         if ! command -v "$comando" >/dev/null 2>&1; then
             warn "Falta $comando. Instalá las herramientas básicas y Docker"
             return 1
@@ -98,16 +109,14 @@ configurar_sglab() {
     done
     sudo docker compose version >/dev/null || return 1
     sudo docker info >/dev/null || return 1
-    verificar_bd_sglab || return 1
     preparar_receptor || return 1
     grupo_operador="$(id -gn "$operador")"
-    sudo usermod -aG docker,sglab-ingest "$operador" || return 1
-    permisos_cola || return 1
     if [ ! -x "$proyecto/.venv/bin/python" ]; then
         sudo -u "$operador" -- python3 -m venv "$proyecto/.venv" || return 1
     fi
     sudo -u "$operador" -- "$proyecto/.venv/bin/python" -m pip install -r "$proyecto/server/ingest/requirements-bash.txt" || return 1
-    sudo -u "$operador" -- python3 "$proyecto/infra/configurar-spawn.py" --usuario "$operador" --proyecto "$proyecto" || return 1
+    permisos_cola || return 1
+    sudo -u "$operador" -- python3 "$proyecto/infra/configurar-spawn.py" --usuario "$receptor" --proyecto "$proyecto" || return 1
     sudo install -m 0644 "$proyecto/var/systemd/sglab-spawn.service" /etc/systemd/system/sglab-spawn.service || return 1
     case "$OS" in
         ubuntu|debian|kali|zorin|mint) servicio_ssh=ssh ;;
@@ -116,9 +125,8 @@ configurar_sglab() {
     sudo systemctl enable --now "$servicio_ssh" || return 1
     sudo systemctl daemon-reload || return 1
     sudo systemctl enable sglab-spawn || return 1
-    sudo systemctl restart sglab-spawn || return 1
-    sudo systemctl is-active --quiet sglab-spawn || return 1
-    log "Recepción e ingesta configuradas"
+    log "Receptor y servicio preparados; spawn se activará desde infra.sh después del despliegue"
+    info "Configurá .env a partir de .env.example si falta y ejecutá sudo bash infra/infra.sh"
     info "Usuario SSH de los clientes: $receptor"
     info "Directorio remoto: $proyecto/var/incoming"
     info "El cliente registra su clave pública usando la contraseña del receptor"
@@ -169,7 +177,11 @@ clonar_repo_sglab() {
         return 1
     fi
     # Reutilizar el usuario que ya crea provision, sin agregar otra cuenta.
-    operador=BASE-TD2
+    operador="${SUDO_USER:-root}"
+    if [ "$operador" = root ] || [ "$operador" = BASE-TD2 ]; then
+        warn "Cloná como administrador mediante sudo, no como BASE-TD2"
+        return 1
+    fi
     if ! id "$operador" >/dev/null 2>&1; then
         sudo useradd -m -s /bin/bash "$operador" || return 1
         log "Usuario base $operador creado"
@@ -204,7 +216,7 @@ clonar_repo_sglab() {
     fi
     # El repositorio puede contener SGLAB en su raíz o dentro de server.
     proyecto=""
-    for subcarpeta in . SGLAB server/SGLAB server/SGLAB-copia; do
+    for subcarpeta in . SGLAB server/setup_infra server/SGLAB server/SGLAB-copia; do
         if [ -f "$destino_repo/$subcarpeta/compose.yaml" ] && [ -f "$destino_repo/$subcarpeta/server/bin/spawn.sh" ]; then
             proyecto="$(cd "$destino_repo/$subcarpeta" && pwd -P)" || return 1
             break

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Genera la unidad de spawn para el usuario y la ruta de este servidor Linux."""
 import argparse
-import grp
 import os
 from pathlib import Path
 import pwd
@@ -16,10 +15,10 @@ def literal(value):
     return '"' + str(value).replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%') + '"'
 
 
-def unidad(project, user, bash, docker_group):
-    group = 'SupplementaryGroups=docker\n' if docker_group else ''
+def unidad(project, user, bash):
     return f'''[Unit]
 Description=SGLAB - Ingesta de reportes TOML
+ConditionPathExists=/etc/sglab/ingest.cnf
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target
@@ -27,14 +26,18 @@ Wants=network-online.target
 [Service]
 Type=simple
 User={user}
-{group}WorkingDirectory={str(project).replace('%', '%%')}
+WorkingDirectory={str(project).replace('%', '%%')}
 Environment={literal('SGLAB_DATA_DIR=' + str(project / 'var'))}
-Environment={literal('SGLAB_COMPOSE_DIR=' + str(project))}
+Environment={literal('SGLAB_DB_CONFIG=/etc/sglab/ingest.cnf')}
 Environment={literal('SGLAB_TOMLQ=' + str(project / '.venv/bin/tomlq'))}
 ExecStart={literal(bash)} {literal(project / 'server/bin/spawn.sh')}
 Restart=on-failure
 RestartSec=5
 UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths={literal(project / "var/incoming")} {literal(project / "var/processing")} {literal(project / "var/processed")} {literal(project / "var/rejected")} {literal(project / "var/.spawn.lock")}
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
@@ -43,7 +46,7 @@ WantedBy=multi-user.target
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--usuario', help='Usuario Linux dueño de la instalación; por defecto, el usuario actual')
+    parser.add_argument('--usuario', help='Usuario Linux del servicio; por defecto, el usuario actual')
     parser.add_argument('--proyecto', type=Path, default=ROOT)
     args = parser.parse_args()
     try:
@@ -61,7 +64,7 @@ def main():
         project = args.proyecto.resolve()
         if any(c in str(project) for c in ('\n', '\r', '$')):
             raise ValueError('La ruta del proyecto no puede contener saltos de línea ni $.')
-        for path in (project/'compose.yaml', project/'.env', project/'server/bin/spawn.sh'):
+        for path in (project/'compose.yaml', project/'server/bin/spawn.sh'):
             if not path.is_file():
                 raise ValueError('No se encontró ' + str(path))
         tomlq = project/'.venv/bin/tomlq'
@@ -74,17 +77,12 @@ def main():
         bash = shutil.which('bash')
         if not bash:
             raise ValueError('No se encontró bash.')
-        try:
-            grp.getgrnam('docker')
-            docker_group = True
-        except KeyError:
-            docker_group = False
         output = project/'var/systemd/sglab-spawn.service'
         output.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         fd, temporary = tempfile.mkstemp(prefix='.spawn-', dir=output.parent)
         try:
             with os.fdopen(fd, 'w') as stream:
-                stream.write(unidad(project, user.pw_name, bash, docker_group))
+                stream.write(unidad(project, user.pw_name, bash))
             os.replace(temporary, output)
             output.chmod(0o644)
         finally:
@@ -98,7 +96,7 @@ def main():
         print('sudo systemctl daemon-reload')
         print('sudo systemctl reset-failed sglab-spawn')
         print('sudo systemctl enable sglab-spawn')
-        print('sudo systemctl restart sglab-spawn')
+        print('sudo bash infra/infra.sh  # prepara credenciales y activa spawn tras el despliegue')
         return 0
     except (OSError, ValueError) as exc:
         parser.exit(1, 'No se pudo preparar el servicio: ' + str(exc) + '\n')

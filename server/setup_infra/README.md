@@ -304,7 +304,7 @@ docker compose up -d --build web
 | SSH de pruebas | `facu@192.168.50.83`, puerto 22 |
 | Recepción | `/home/facu/-TD2_SGLAB/SGLAB/var/incoming` |
 | Servicio permanente | `sglab-spawn.service`, habilitado y activo al configurarlo |
-| Usuario del daemon | `facu`, grupos suplementarios docker y sglab-ingest |
+| Usuario del daemon | `BASE-TD2`, sin Docker; credenciales limitadas en `/etc/sglab/ingest.cnf` |
 
 La IP es la observada, no una dirección garantizada por el proyecto. Si cambia,
 actualizar clientes/perfil o usar DNS estable. El lanzador sin perfil pregunta
@@ -421,3 +421,7 @@ sus credenciales; la web no ofrece ese alias como un perfil adicional.
 Se conservan los scripts y el servicio del commit `0a015f7`. El registro de acciones
 está integrado en `infra/infra.sh`; la ruta anterior `server/bin/infra.sh` sigue
 funcionando. Ver [LOGS-DOCKER.md](docs/LOGS-DOCKER.md).
+
+La instalación con administrador y receptor separados se documenta en
+[PROVISION-SGLAB.md](docs/PROVISION-SGLAB.md). El administrador conserva el
+proyecto en `/home`; spawn conecta por MariaDB local sin leer el `.env` general.

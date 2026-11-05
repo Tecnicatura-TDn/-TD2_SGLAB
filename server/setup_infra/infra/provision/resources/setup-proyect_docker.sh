@@ -122,7 +122,9 @@ install_docker() {
         ;;
     esac
     sudo systemctl enable --now docker || return 1
-    sudo usermod -aG docker BASE-TD2 || return 1
+    if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != BASE-TD2 ] && [ "$SUDO_USER" != root ]; then
+        sudo usermod -aG docker "$SUDO_USER" || return 1
+    fi
 
 
 }

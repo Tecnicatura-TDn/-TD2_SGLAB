@@ -19,7 +19,7 @@ install_basic_tools() {
     case "$OS" in
         ubuntu|debian|kali|zorin|mint)
             sudo apt-get install -y -qq git curl wget rsync openssh-client openssh-server \
-                ca-certificates gnupg unzip make nano htop vim python3 python3-pip python3-venv jq acl openssl
+                ca-certificates gnupg unzip make nano htop vim python3 python3-pip python3-venv jq acl openssl mariadb-client
             ;;
         centos|rhel|fedora|rocky)
             # Detecta automáticamente si existe dnf, sino usa yum como respaldo
@@ -30,7 +30,7 @@ install_basic_tools() {
             fi
             
             sudo "$PKG_MANAGER" install -y -q git curl wget rsync openssh-clients openssh-server \
-                unzip nano vim dnf-plugins-core python3 python3-pip jq acl openssl
+                unzip nano vim dnf-plugins-core python3 python3-pip jq acl openssl mariadb
 
             # Para instalar top y htop si es estrictamente necesario:
             # paquete que contiene top: sudo dnf install procps-ng

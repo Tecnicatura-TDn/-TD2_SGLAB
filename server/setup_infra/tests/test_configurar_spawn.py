@@ -19,23 +19,27 @@ spec.loader.exec_module(configurar)
 class ConfigurarSpawn(unittest.TestCase):
     def test_unidad_utiliza_usuario_y_ruta_del_destino(self):
         project = Path('/home/sebapancho/SGLAB')
-        text = configurar.unidad(project, 'sebapancho', '/usr/bin/bash', True)
+        text = configurar.unidad(project, 'sebapancho', '/usr/bin/bash')
         self.assertIn('User=sebapancho\n', text)
         self.assertIn('WorkingDirectory=/home/sebapancho/SGLAB\n', text)
         self.assertIn('SGLAB_TOMLQ=/home/sebapancho/SGLAB/.venv/bin/tomlq', text)
-        self.assertIn('SGLAB_COMPOSE_DIR=/home/sebapancho/SGLAB', text)
+        self.assertIn('SGLAB_DB_CONFIG=/etc/sglab/ingest.cnf', text)
+        self.assertNotIn('SupplementaryGroups=docker', text)
+        self.assertIn('NoNewPrivileges=true', text)
+        self.assertIn('ProtectSystem=strict', text)
+        self.assertIn('ConditionPathExists=/etc/sglab/ingest.cnf', text)
         self.assertNotIn('facu', text)
         self.assertNotIn('sglab-ingest', text)
 
     def test_no_requiere_grupos_que_no_existen_y_escapa_porcentajes(self):
-        text = configurar.unidad(Path('/srv/Proyecto 50%'), 'asistente', '/bin/bash', False)
+        text = configurar.unidad(Path('/srv/Proyecto 50%'), 'asistente', '/bin/bash')
         self.assertNotIn('SupplementaryGroups=', text)
         self.assertIn('WorkingDirectory=/srv/Proyecto 50%%\n', text)
 
     def test_genera_archivo_sin_instalar_el_servicio(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            for name in ('compose.yaml', '.env', 'server/bin/spawn.sh'):
+            for name in ('compose.yaml', 'server/bin/spawn.sh'):
                 path = root/name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text('prueba')
@@ -47,7 +51,6 @@ class ConfigurarSpawn(unittest.TestCase):
             if user.pw_uid == 0:
                 self.skipTest('La generación necesita una cuenta de servicio no root')
             with patch.object(sys, 'argv', ['configurar-spawn.py', '--usuario', user.pw_name, '--proyecto', str(root)]), \
-                    patch.object(configurar.grp, 'getgrnam', side_effect=KeyError('docker')), \
                     contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(configurar.main(), 0)
             text = (root/'var/systemd/sglab-spawn.service').read_text()

@@ -5,7 +5,7 @@
 #
 # Este script se encarga de:
 # - verificar que Docker y Docker Compose funcionen;
-# - crear el .env cuando se configura SGLAB por primera vez;
+# - comprobar que exista el .env configurado antes de iniciar;
 # - crear y levantar los contenedores web y db usando compose.yaml;
 # - levantar o detener servicios, consultar su estado y ver/exportar logs.
 #
@@ -363,6 +363,46 @@ crear_env() {
 # Revisar la configuración antes de desplegar
 # -----------------------------------------------------------------------------
 
+preparar_https_inicial() {
+    if [[ -s "$PROJECT_ROOT/var/tls/server.crt" && -s "$PROJECT_ROOT/var/tls/server.key" ]] &&
+       grep -Eq '^SGLAB_HTTPS_ORIGIN=https://' "$ENV_FILE"; then
+        return 0
+    fi
+
+    local ip_detectada="" ip_servidor="" puerto_https=""
+    for comando in python3 openssl; do
+        command -v "$comando" >/dev/null || {
+            error "Falta $comando para preparar HTTPS. Instalalo y volvé a ejecutar infra.sh."
+            return 1
+        }
+    done
+    # Consultar la ruta no envía paquetes ni necesita conexión a Internet.
+    # Usar su dirección de origen evita elegir los puentes internos de Docker.
+    ip_detectada="$(python3 - <<'PY'
+import ipaddress
+import json
+import subprocess
+try:
+    routes = json.loads(subprocess.check_output(
+        ['ip', '-j', '-4', 'route', 'get', '1.1.1.1'], stderr=subprocess.DEVNULL))
+    address = ipaddress.IPv4Address(routes[0].get('prefsrc') or routes[0]['src'])
+    if not (address.is_loopback or address.is_link_local or address.is_unspecified or address.is_multicast):
+        print(address)
+except (OSError, ValueError, KeyError, IndexError, subprocess.SubprocessError):
+    pass
+PY
+)"
+    info "Preparando HTTPS para las PC del laboratorio."
+    aviso "Usá la IP accesible desde los clientes; revisá la sugerencia si hay VPN o varias interfaces."
+    if ! read -r -p "IP del servidor${ip_detectada:+ [$ip_detectada]}: " ip_servidor; then
+        return 1
+    fi
+    ip_servidor="${ip_servidor:-$ip_detectada}"
+    # Conservar el puerto HTTPS configurado, si existe; no ejecutar .env como shell.
+    puerto_https="$(sed -nE "s/^APP_HTTPS_PORT=['\"]?([0-9]+)['\"]?[[:space:]]*$/\1/p" "$ENV_FILE")"
+    python3 "$SCRIPT_DIR/configurar-https.py" "$ip_servidor" --puerto "${puerto_https:-443}" || return 1
+}
+
 validar_configuracion() {
     if [[ ! -f "$ENV_FILE" || ! -r "$ENV_FILE" ]]; then
         error "No existe .env o no tengo permiso para leerlo."
@@ -412,14 +452,13 @@ despliegue_inicial() {
         return 1
     fi
 
-    crear_env || return 1
-
     # Si el archivo ya existía con permisos amplios, intentamos protegerlo.
     chmod 600 -- "$ENV_FILE" || {
         error "No se pudieron ajustar los permisos de .env."
         return 1
     }
 
+    preparar_https_inicial || return 1
     validar_configuracion || return 1
 
     info "Construyendo la imagen web y levantando los servicios web y db..."
@@ -754,8 +793,38 @@ menu() {
 # Función principal
 # -----------------------------------------------------------------------------
 
+activar_spawn_preparado() {
+    local unidad="$PROJECT_ROOT/var/systemd/sglab-spawn.service"
+    [[ -f "$unidad" ]] || return 0
+    if [[ "$EUID" -ne 0 ]]; then
+        error "Para completar la activación de spawn ejecutá infra.sh con sudo."
+        return 1
+    fi
+    if ! cmp -s "$unidad" /etc/systemd/system/sglab-spawn.service; then
+        error "El servicio instalado no coincide con este proyecto. Reejecutá provision.sh --configurar-sglab."
+        return 1
+    fi
+    python3 "$SCRIPT_DIR/configurar-ingesta.py" "$PROJECT_ROOT" || return 1
+    sudo -u BASE-TD2 -- mariadb --defaults-file=/etc/sglab/ingest.cnf \
+        --batch --skip-column-names -e 'SELECT id_equipo FROM equipo LIMIT 0' >/dev/null || {
+        error "No se pudo validar la conexión de ingesta. Revisá MariaDB y sus credenciales."
+        return 1
+    }
+    systemctl enable --now sglab-spawn || return 1
+    systemctl is-active --quiet sglab-spawn || return 1
+    info "Servicio sglab-spawn activo. Logs: sudo journalctl -u sglab-spawn -f"
+}
+
+
 main() {
     info "Proyecto: $PROJECT_ROOT"
+
+    if [[ ! -f "$ENV_FILE" ]]; then
+        aviso "Falta el archivo de configuración: $ENV_FILE"
+        aviso "Copiá .env.example como .env en $PROJECT_ROOT y configurá sus valores y contraseñas."
+        aviso "Después volvé a ejecutar infra.sh."
+        exit 1
+    fi
 
     verificar_requisitos || exit 1
 
@@ -769,6 +838,7 @@ main() {
 
     # Para administrar la infraestructura necesitamos el .env real.
     validar_configuracion || exit 1
+    activar_spawn_preparado || exit 1
     menu
 }
 

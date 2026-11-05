@@ -1,108 +1,123 @@
-# Usuario BASE-TD2, repositorio y recepción
+# Administrador, receptor SSH y servicio spawn
 
-El aprovisionamiento reutiliza **BASE-TD2**, el usuario que ya creaba provision.
-Ese mismo usuario es dueño del repositorio, recibe capturas por SSH y ejecuta
-spawn. No se crea una cuenta adicional llamada sglab.
+El proyecto permanece en el home del administrador, por ejemplo
+`/home/facu/-TD2_SGLAB/server/setup_infra`. El administrador conserva la propiedad
+del código, `.env`, certificados y entorno `.venv`. No ejecutar la instalación
+como `BASE-TD2` ni transferirle el repositorio.
 
-BASE-TD2 pertenece a **docker** para ejecutar la ingesta mediante Compose y a
-**sglab-ingest** para la carpeta de recepción. La cuenta de MariaDB
-`DB_INGEST_USER` sigue siendo distinta: es la que inserta los registros en la base.
-Al compartir la cuenta Linux, las claves SSH autorizadas para BASE-TD2 tienen los
-permisos de esa cuenta, incluido acceso a Docker y a su configuración local.
+`BASE-TD2` es la cuenta genérica que recibe capturas y ejecuta spawn. No necesita
+sudo ni pertenecer a docker. Tiene escritura en `var/incoming`, `var/processing`,
+`var/processed`, `var/rejected` y el bloqueo `var/.spawn.lock`. El provisionador
+aplica ACL para atravesar las carpetas superiores y leer exclusivamente el script
+y el entorno Python necesarios, sin abrir todo `/home/facu` a otros usuarios.
+El administrador puede inspeccionar la cola mediante sudo.
 
-## Instalar y clonar
+## Instalación
 
-La opción Docker instala las herramientas y clona el repositorio como BASE-TD2,
-en su carpeta personal: normalmente `/home/BASE-TD2/SGLAB`.
-También se puede clonar desde la opción **5** o ejecutar:
+Instalar Docker y las herramientas del provisionador. También se requieren
+`setfacl` (paquete `acl`), `mariadb` (cliente, normalmente `mariadb-client` en Debian
+ o `mariadb` en Rocky/RHEL), Python con venv/pip, jq y OpenSSH.
+
+Desde la raíz SGLAB que contiene compose.yaml:
 
 ```bash
-sudo sh infra/provision/provision.sh --clonar-sglab
+sudo bash infra/provision/provision.sh --configurar-sglab
+cp .env.example .env  # solo si todavía no existe; configurar sus valores
+sudo bash infra/infra.sh
 ```
 
-Pide la URL GitHub, por defecto:
-`https://github.com/Tecnicatura-TDn/-TD2_SGLAB.git`. Reutiliza BASE-TD2 y lo crea solo
-si todavía no existe. Git se ejecuta como ese usuario, no como root.
-Detecta la raíz SGLAB tanto directamente como en SGLAB, server/SGLAB o
-server/SGLAB-copia y muestra la ruta encontrada.
+Primero provision prepara usuario, dependencias, permisos y la unidad systemd,
+sin exigir `.env` ni contenedores creados. La ruta solicitada es la carpeta con
+`compose.yaml` (aceptar la sugerencia con Enter); no ingresar `/home`.
+Después configurar `.env` y ejecutar infra.sh: prepara HTTPS si falta, levanta
+los contenedores y activa spawn una vez comprobada la conexión a MariaDB.
+El provisionador crea `BASE-TD2` si falta.
+Si no tiene contraseña pide definirla para registrar las claves de los clientes.
+No es ninguna de las contraseñas de MariaDB.
 
-Si ya está clonado desde el mismo origen, conserva todos los archivos sin pull ni
-sobrescrituras. Rechaza otra carpeta, origen distinto o enlace simbólico.
-Para repositorios privados configurar el acceso Git de BASE-TD2; no incluir tokens
-ni contraseñas en la URL. Las claves GitHub de root no autorizan automáticamente
-a BASE-TD2. La clonación obtiene lo publicado en GitHub, no cambios locales sin subir.
+El provisionador instala el parser en `.venv` como administrador, aplica permisos,
+deja la extracción de credenciales para infra.sh. Este extrae solamente las credenciales `DB_INGEST_USER` y `DB_INGEST_PASSWORD` mediante
+la configuración resuelta de Compose y las guarda en `/etc/sglab/ingest.cnf`.
+El archivo es root:sglab-ingest con permisos 640; no incluye root, web ni respaldos.
+No se imprime su contenido. No agregar otras cuentas al grupo sglab-ingest.
 
-## Preparar infraestructura y spawn
+spawn usa el cliente MariaDB local y ese archivo, sin leer `.env` ni invocar
+Docker. Compose ya publica MariaDB exclusivamente en `127.0.0.1`, usando
+`DB_BIND_PORT` (3306 por defecto). No abrir ese puerto al laboratorio. Se valida
+la conexión con la identidad real de BASE-TD2 antes de activar el servicio.
+La cuenta SQL conserva sus permisos existentes: consultar e insertar capturas,
+sin administrar usuarios ni modificar el estado administrativo de los equipos.
 
-Entrar como el usuario existente mediante `sudo -iu BASE-TD2`, ir a la raíz SGLAB
-que mostró la clonación y preparar `.env`, HTTPS y los contenedores con infra.sh.
-Después, desde una cuenta administradora, usar la opción **3** o:
+El servicio systemd se instala con `User=BASE-TD2`, sin grupos Docker,
+`NoNewPrivileges`, sistema de archivos de solo lectura salvo la cola y un
+directorio temporal privado. Reinicia ante fallos y arranca con el servidor.
+Las claves SSH de los clientes comparten los permisos de BASE-TD2: la cuenta
+puede leer las credenciales de ingesta y todas las capturas de la cola; no hay
+separación por cliente dentro de esta cuenta genérica.
 
-```bash
-sudo sh infra/provision/provision.sh --configurar-sglab
+## Configurar los clientes
+
+Usar en cliente.json el usuario `BASE-TD2`, la IP del servidor y la ruta exacta
+que imprime el provisionador, por ejemplo:
+
+```json
+{
+  "usuario": "BASE-TD2",
+  "servidor": "192.168.2.229",
+  "directorio_remoto": "/home/facu/-TD2_SGLAB/server/setup_infra/var/incoming"
+}
 ```
 
-Pide la ruta del proyecto, pero ya no pide crear/elegir otro usuario: usa BASE-TD2.
-Desde el mismo menú sugiere la ruta recién clonada. Comprueba Docker Compose,
-MariaDB saludable y el acceso de DB_INGEST_USER antes de activar la ingesta.
-
-Prepara `.ssh` (0700) y `authorized_keys` (0600) conservando claves existentes.
-Si BASE-TD2 no tiene contraseña, pide definirla con `passwd`, sin guardarla ni
-imprimirla en logs. Si ya tiene contraseña se conserva. Para cambiarla después:
+Estos son campos a actualizar en el perfil completo, no un reemplazo de todos
+sus campos. El instalador registra la clave pública; la clave privada permanece
+en la PC. Si SSH no admite contraseñas, autorizar la pública desde el servidor:
 
 ```bash
-sudo passwd BASE-TD2
+sudo bash infra/provision/provision.sh --autorizar-cliente
 ```
 
-BASE-TD2 es propietario de var y de la cola: incoming tiene grupo sglab-ingest y
-setgid (2770); processing, processed y rejected quedan 0700; `.env` queda 0600.
-No se abren permisos del home a otros usuarios ni se necesitan ACL de recorrido
-para una segunda cuenta. Se rechazan enlaces en la cola y archivos SSH.
-
-Instala el parser en `.venv`, genera la unidad de spawn con `User=BASE-TD2`, la
-instala en systemd, habilita SSH y reinicia la ingesta. No modifica firewall,
-políticas SSH institucionales ni SELinux. Si falta .env o MariaDB no está lista,
-informa lo pendiente sin afirmar que terminó la configuración.
-
-## Autorizar clientes
-
-Usar **BASE-TD2** y la ruta exacta de incoming que muestra provision en el perfil
-cliente. El instalador puede agregar su clave pública mediante la contraseña del
-receptor; los envíos posteriores usan la clave, sin guardar esa contraseña.
-
-Si SSH no admite contraseñas, copiar solo el `.pub` al servidor y usar la opción
-**4** o:
+## Estado y logs
 
 ```bash
-sudo sh infra/provision/provision.sh --autorizar-cliente
-```
-
-Valida una sola clave pública y la agrega sin duplicarla, con `restrict` para
-impedir reenvíos y PTY; permite los comandos no interactivos y SCP/SFTP necesarios.
-No copia claves privadas ni desactiva la comprobación de huella. Revisar también
-AllowUsers/AllowGroups, firewall y SELinux si una política bloquea la conexión.
-
-## Verificación
-
-```bash
-id BASE-TD2
+sudo systemctl enable --now sglab-spawn
 sudo systemctl status sglab-spawn --no-pager
-sudo journalctl -u sglab-spawn -n 30 --no-pager
+sudo journalctl -u sglab-spawn -n 50 -f
+sudo systemctl restart sglab-spawn
+sudo systemctl stop sglab-spawn
 ```
 
-La prueba aislada usa cuentas Linux reales en un contenedor descartable. Comprueba
-contraseña inicial/repetición, grupos docker y sglab-ingest, permisos de claves,
-publicación y movimiento de capturas por BASE-TD2, .env privado y rechazo de
-claves privadas/enlaces. Git se simula sin red: prueba propiedad del checkout por
-BASE-TD2 existente, que no se crea sglab y que no se pierden cambios locales.
+Ctrl+C cierra el seguimiento de logs sin detener el servicio. Los fallos por
+captura quedan en `var/rejected/job.*/resultado.log`, junto al original.
 
-Desde la raíz del repositorio que contiene server/SGLAB-copia:
+## Actualizar una instalación anterior
+
+Guardar un respaldo y detener spawn antes de cambiar sus archivos. El proyecto
+y su `.venv` deben pertenecer al administrador, no a BASE-TD2. El provisionador
+rechaza un proyecto propiedad del receptor; no cambia recursivamente la propiedad
+de una instalación existente. Corregirla con el administrador antes de continuar.
+
+Reejecutar `--configurar-sglab` como administrador. Elimina al receptor del grupo
+docker si pertenecía a él, deja preparada la unidad y prepara el
+servicio. Después ejecutar infra.sh para actualizar credenciales y activarlo. Cerrar las sesiones SSH antiguas de BASE-TD2: los procesos existentes
+conservan sus grupos hasta terminar. Revisar y quitar cualquier permiso sudo que
+se le hubiera concedido manualmente. Si conocía las claves del `.env` general,
+rotarlas también en la BD: cambiar solo `.env` no cambia usuarios de un volumen
+MariaDB existente.
+
+Después de cambiar el puerto o las credenciales de ingesta en Compose y MariaDB,
+reejecutar infra.sh para actualizar `/etc/sglab/ingest.cnf`.
+
+## Pruebas
 
 ```bash
-docker build -t sglab-provision-prueba -f server/SGLAB-copia/tests/provision/Dockerfile .
-docker run --rm --network none -v "$PWD/server/SGLAB-copia/infra/provision/resources/setup_sglab.sh:/prueba/setup_sglab.sh:ro,Z" -v "$PWD/server/SGLAB-copia/tests/provision/receptor.sh:/prueba/receptor.sh:ro,Z" sglab-provision-prueba sh /prueba/receptor.sh
+python3 -m unittest discover -s tests -p 'test_configurar*.py'
+bash -n server/bin/spawn.sh
 ```
 
-No ejecutar el script de prueba directamente en el host. No se ejecutó el provision
-completo ni se migró el usuario del servidor activo. Faltan validación de systemd,
-SELinux y un envío real desde Windows en el servidor de destino.
+La prueba de cuentas/ACL usa usuarios reales exclusivamente dentro de un
+contenedor descartable, nunca ejecutar receptor.sh directamente en el servidor:
+
+```bash
+docker build -t sglab-provision-prueba -f tests/provision/Dockerfile .
+docker run --rm --network none -v "$PWD/infra/provision/resources/setup_sglab.sh:/prueba/setup_sglab.sh:ro,Z" -v "$PWD/tests/provision/receptor.sh:/prueba/receptor.sh:ro,Z" sglab-provision-prueba sh /prueba/receptor.sh
+```
